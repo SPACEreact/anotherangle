@@ -13,6 +13,11 @@ export interface ImageAnalysis {
     mood: string;
     timeOfDay: string;
     location: string;
+    cameraAngle?: {
+        azimuth: number;
+        elevation: number;
+        roll: number;
+    };
 }
 
 export interface PromptEnhancement {
@@ -36,8 +41,21 @@ export async function analyzeImage(imageDataUrl: string): Promise<ImageAnalysis 
                 contents: [{
                     parts: [
                         {
-                            text: `Analyze this image for AI image generation. Return ONLY valid JSON:
-{"foreground":"elements in front","midground":"main subject","background":"distant elements","lighting":"lighting style","mood":"one word mood","timeOfDay":"dawn/day/dusk/night","location":"where this appears to be"}`
+                            text: `Analyze this image for AI image generation, including the camera angle/perspective. Return ONLY valid JSON:
+{
+  "foreground":"elements in front",
+  "midground":"main subject",
+  "background":"distant elements",
+  "lighting":"lighting style",
+  "mood":"one word mood",
+  "timeOfDay":"dawn/day/dusk/night",
+  "location":"where this appears to be",
+  "cameraAngle": {
+    "azimuth": "horizontal angle 0-360 degrees (0=front view, 90=left side, 180=back, 270=right side)",
+    "elevation": "vertical angle -90 to 90 degrees (negative=low angle looking up, 0=eye level, positive=high angle looking down)",
+    "roll": "camera tilt -45 to 45 degrees (negative=tilted left, 0=level, positive=tilted right)"
+  }
+}`
                         },
                         {
                             inline_data: {

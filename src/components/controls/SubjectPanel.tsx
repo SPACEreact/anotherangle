@@ -3,6 +3,7 @@ import { Layers, ImageIcon, X, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { useSceneStore } from '../../stores/useSceneStore';
 import { useCompositionStore } from '../../stores/useCompositionStore';
+import { useCameraStore } from '../../stores/useCameraStore';
 import { analyzeImage } from '../../services/aiService';
 import { motion } from 'framer-motion';
 
@@ -12,6 +13,7 @@ export function SubjectPanel() {
     const setSetting = useSceneStore((state) => state.setSetting);
     const setCharSheet = useSceneStore((state) => state.setCharSheet);
     const { setForeground, setMidground, setBackground } = useCompositionStore();
+    const setAngles = useCameraStore((state) => state.setAngles);
 
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
@@ -39,6 +41,15 @@ export function SubjectPanel() {
                     if (analysis.midground) setMidground({ description: analysis.midground });
                     if (analysis.background) setBackground({ description: analysis.background });
                     if (analysis.location) setSetting(analysis.location);
+
+                    // Apply camera angles if detected
+                    if (analysis.cameraAngle) {
+                        setAngles({
+                            azimuth: analysis.cameraAngle.azimuth,
+                            elevation: analysis.cameraAngle.elevation,
+                            roll: analysis.cameraAngle.roll,
+                        });
+                    }
 
                     setAnalysisResult(`🎨 ${analysis.mood} mood, ${analysis.lighting}, ${analysis.timeOfDay}`);
                 } else {

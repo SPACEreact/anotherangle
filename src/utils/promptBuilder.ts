@@ -202,7 +202,7 @@ export function buildPrompt(options: PromptBuilderOptions): string {
     if (scene.charSheet) segments.push("<character_reference_image>");
 
     const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-    segments.push(`${angleDesc} of ${scene.subject}`);
+    segments.push(`camera positioned at ${angleDesc}, ${scene.subject}`);
 
     const lensData = lenses.find(l => l.id === scene.lens);
     if (lensData) segments.push(`shot on ${lensData.name} lens`);
@@ -237,7 +237,7 @@ export function buildPromptSegments(options: PromptBuilderOptions) {
     if (scene.charSheet) segments.push({ type: 'reference', content: '<character_reference_image>' });
 
     const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-    segments.push({ type: 'subject', content: `${angleDesc} of ${scene.subject}` });
+    segments.push({ type: 'subject', content: `camera positioned at ${angleDesc}, ${scene.subject}` });
 
     const lensData = lenses.find(l => l.id === scene.lens);
     if (lensData) segments.push({ type: 'camera', content: `shot on ${lensData.name} lens` });
