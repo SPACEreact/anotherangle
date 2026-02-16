@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState } from 'react';
 import { MapPin, Clock, Cloud, Zap, Globe, Crosshair } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { Slider } from '../ui/Slider';
@@ -7,6 +7,27 @@ import { earthLocations, cosmicLocations, eras, timesOfDay, weatherOptions, seas
 import { getSceneSuggestions } from '../../services/aiService';
 import { clsx } from 'clsx';
 import { motion, AnimatePresence } from 'framer-motion';
+
+
+interface GeocodeAddressComponent {
+    types: string[];
+    long_name: string;
+}
+
+interface GeocodeResult {
+    geometry: {
+        location: {
+            lat: number;
+            lng: number;
+        };
+    };
+    formatted_address?: string;
+    address_components?: GeocodeAddressComponent[];
+}
+
+interface GeocodeResponse {
+    results?: GeocodeResult[];
+}
 
 // Simple Map Component using an iframe
 function SimpleMap() {
@@ -23,21 +44,21 @@ function SimpleMap() {
             const res = await fetch(
                 `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(searchQuery)}&key=AIzaSyAU695i1Apsq5X-geQRp7lAdDsmDOfHOSc`
             );
-            const data = await res.json();
+            const data: GeocodeResponse = await res.json();
 
             if (data.results?.[0]) {
                 const result = data.results[0];
                 const { lat, lng } = result.geometry.location;
 
                 // Extract place name
-                const city = result.address_components?.find((c: any) => c.types.includes('locality'))?.long_name;
-                const country = result.address_components?.find((c: any) => c.types.includes('country'))?.long_name;
+                const city = result.address_components?.find((c) => c.types.includes('locality'))?.long_name;
+                const country = result.address_components?.find((c) => c.types.includes('country'))?.long_name;
                 const placeName = city && country ? `${city}, ${country}` : result.formatted_address?.split(',').slice(0, 2).join(',');
 
                 setCoordinates({ lat, lng, placeName: placeName || searchQuery });
             }
-        } catch (err) {
-            console.error('Geocode failed:', err);
+        } catch (error) {
+            console.error('Geocode failed:', error);
         }
 
         setSearching(false);
@@ -96,7 +117,7 @@ function SimpleMap() {
 
 export function LocationTimePicker() {
     const {
-        mode, coordinates, earthLocation, customLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled,
+        mode, coordinates, earthLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled,
         setMode, setEarthLocation, setCustomLocation, setCosmicLocation, setEra, setYear, setTimeOfDay, setWeather, setSeason, setSmartFilterEnabled, setCoordinates
     } = useLocationStore();
 

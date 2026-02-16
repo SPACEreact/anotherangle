@@ -8,7 +8,7 @@ import { cameraPresets } from '../data/presets';
  */
 export function useKeyboardShortcuts() {
     const { azimuth, elevation, roll, setAzimuth, setElevation, setRoll, reset, loadPreset } = useCameraStore();
-    const { toggleDarkMode, toggleKeyboardHelp, setCopied } = useUIStore();
+    const { toggleDarkMode, toggleKeyboardHelp } = useUIStore();
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -88,13 +88,14 @@ export function useKeyboardShortcuts() {
                 case '5':
                 case '6':
                 case '7':
-                case '8':
+                case '8': {
                     e.preventDefault();
                     const presetIndex = parseInt(e.key) - 1;
                     if (presetIndex < cameraPresets.length) {
                         loadPreset(cameraPresets[presetIndex].angles);
                     }
                     break;
+                }
             }
         };
 

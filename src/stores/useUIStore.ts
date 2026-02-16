@@ -1,19 +1,27 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+export type NotificationType = 'success' | 'error' | 'info';
+
+export interface Notification {
+    id: string;
+    message: string;
+    type: NotificationType;
+}
+
 interface UIStore {
     darkMode: boolean;
     copied: boolean;
     currentPreset: string | null;
     showKeyboardHelp: boolean;
-    notifications: Array<{ id: string; message: string; type: 'success' | 'error' | 'info' }>;
+    notifications: Notification[];
 
     toggleDarkMode: () => void;
     setDarkMode: (value: boolean) => void;
     setCopied: (value: boolean) => void;
     setCurrentPreset: (id: string | null) => void;
     toggleKeyboardHelp: () => void;
-    addNotification: (message: string, type?: 'success' | 'error' | 'info') => void;
+    addNotification: (message: string, type?: NotificationType) => void;
     removeNotification: (id: string) => void;
 }
 

@@ -1,5 +1,3 @@
-import type { CameraAngles } from '../types';
-
 /**
  * Get precise technical camera angle description for AI image generation
  * Uses cinematography terminology with exact degree specifications

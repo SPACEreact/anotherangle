@@ -44,7 +44,7 @@ export function SubjectPanel() {
                 } else {
                     setAnalysisResult('⚠️ Could not analyze image');
                 }
-            } catch (err) {
+            } catch {
                 setAnalysisResult('⚠️ Analysis failed');
             }
 

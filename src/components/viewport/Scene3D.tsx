@@ -1,8 +1,7 @@
-import { useRef, useMemo } from 'react';
+import { useRef } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Grid } from '@react-three/drei';
 import { useCameraStore } from '../../stores/useCameraStore';
-import { useSceneStore } from '../../stores/useSceneStore';
 import { useLightingStore } from '../../stores/useLightingStore';
 import * as THREE from 'three';
 
@@ -174,17 +173,12 @@ function DynamicLighting() {
 // Volumetric fog effect
 function VolumetricFog() {
     const { volumetric, fogDensity, fogColor } = useLightingStore();
-    const { scene } = useThree();
 
-    useFrame(() => {
-        if (volumetric) {
-            scene.fog = new THREE.FogExp2(fogColor, fogDensity);
-        } else {
-            scene.fog = null;
-        }
-    });
+    if (!volumetric) {
+        return null;
+    }
 
-    return null;
+    return <fogExp2 attach="fog" args={[fogColor, fogDensity]} />;
 }
 
 function Scene() {

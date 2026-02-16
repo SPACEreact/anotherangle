@@ -1,6 +1,7 @@
 import { Sun, Lightbulb, Sparkles, CloudFog } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { Slider } from '../ui/Slider';
+import type { SliderProps } from '../ui/Slider';
 import { useLightingStore } from '../../stores/useLightingStore';
 import { clsx } from 'clsx';
 import { motion } from 'framer-motion';
@@ -28,7 +29,7 @@ const practicalTypes = [
 interface LightControlProps {
     label: string;
     color: string;
-    accentColor: string;
+    accentColor: SliderProps['color'];
     enabled: boolean;
     intensity: number;
     lightColor: string;
@@ -89,7 +90,7 @@ function LightControl({
                     min={0}
                     max={200}
                     showValue={false}
-                    color={accentColor as any}
+                    color={accentColor}
                 />
             )}
         </div>

@@ -35,13 +35,6 @@ export function PromptOutput() {
     const setEra = useLocationStore((state) => state.setEra);
     const setVolumetric = useLightingStore((state) => state.setVolumetric);
 
-    // Sync edited prompt when entering edit mode
-    useEffect(() => {
-        if (isEditing && editedPrompt === '') {
-            setEditedPrompt(prompt);
-        }
-    }, [isEditing, prompt, editedPrompt]);
-
     useEffect(() => {
         const handleCopyEvent = async () => {
             const success = await copyToClipboard(prompt);
@@ -147,7 +140,7 @@ export function PromptOutput() {
             } else {
                 addNotification('Could not parse prompt. Try again.', 'error');
             }
-        } catch (err) {
+        } catch {
             addNotification('Failed to parse prompt', 'error');
         }
         setIsParsing(false);
