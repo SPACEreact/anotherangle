@@ -29,7 +29,7 @@ export function AIAssistant() {
             } else {
                 setError('AI enhancement unavailable');
             }
-        } catch (err) {
+        } catch {
             setError('Failed to enhance prompt');
         }
 

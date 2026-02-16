@@ -1,7 +1,7 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import { clsx } from 'clsx';
 
-interface SliderProps {
+export interface SliderProps {
     value: number;
     onChange: (value: number) => void;
     min: number;

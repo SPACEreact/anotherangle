@@ -226,7 +226,7 @@ export function buildPrompt(options: PromptBuilderOptions): string {
     segments.push("detailed textures, professional composition");
     segments.push(`--ar ${scene.aspectRatio}`);
 
-    let prompt = segments.join(", ");
+    const prompt = segments.join(", ");
     return applySmartFilter(prompt, location.smartFilterEnabled);
 }
 
