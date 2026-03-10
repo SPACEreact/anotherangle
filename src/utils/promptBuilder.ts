@@ -309,13 +309,66 @@ function buildLocationTimeDescription(loc: LocationData): string {
 
 export function buildPrompt(options: PromptBuilderOptions): string {
     const { camera, scene, lighting, composition, location } = options;
+
+    // ── When a reference image is present, build an EDIT/DIRECTIVE prompt ──
+    if (scene.charSheet) {
+        const directives: string[] = [];
+        directives.push("<character_reference_image>");
+        directives.push("Using this reference image as the base");
+
+        // Subject/setting changes
+        if (scene.subject?.trim()) {
+            directives.push(`change the subject to: ${scene.subject.trim()}`);
+        }
+        const locDesc = buildLocationTimeDescription(location);
+        if (locDesc) {
+            directives.push(`move the setting to ${locDesc.replace(/^in /, '')}`);
+        } else if (scene.setting?.trim()) {
+            directives.push(`change the environment to ${scene.setting.trim()}`);
+        }
+
+        // Composition changes
+        const compParts: string[] = [];
+        if (composition.foreground.description?.trim()) {
+            const fogDesc = composition.foreground.fogDensity > 50 ? 'hazy' : composition.foreground.fogDensity > 20 ? 'soft' : 'sharp';
+            compParts.push(`place ${composition.foreground.description.trim()} in a ${fogDesc} foreground`);
+        }
+        if (composition.midground.description?.trim()) {
+            compParts.push(`set ${composition.midground.description.trim()} in the midground`);
+        }
+        if (composition.background.description?.trim()) {
+            const fogDesc = composition.background.fogDensity > 50 ? 'distant atmospheric' : composition.background.fogDensity > 20 ? 'hazy' : 'clear';
+            compParts.push(`place ${composition.background.description.trim()} in a ${fogDesc} background`);
+        }
+        if (composition.depthBlur > 50) compParts.push('apply shallow depth of field');
+        else if (composition.depthBlur > 20) compParts.push('apply moderate depth of field');
+        if (compParts.length) directives.push(`adjust the composition: ${compParts.join(', ')}`);
+
+        // Lighting changes
+        const lightDesc = buildLightingDescription(lighting);
+        if (lightDesc) directives.push(`change the lighting to: ${lightDesc}`);
+
+        // Camera/technical changes
+        const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
+        directives.push(`reposition the camera to ${angleDesc}`);
+
+        const lensData = lenses.find(l => l.id === scene.lens);
+        if (lensData) directives.push(`shoot on ${lensData.name} lens`);
+
+        const filmData = filmStocks.find(f => f.id === scene.filmStock);
+        if (filmData) directives.push(`apply ${filmData.prompt}`);
+
+        directives.push(`maintain detailed textures and professional cinematic composition`);
+        directives.push(`--ar ${scene.aspectRatio}`);
+
+        let prompt = directives.join('. ');
+        return applySmartFilter(prompt, location.smartFilterEnabled);
+    }
+
+    // ── No reference image: standard 4-layer cinematic generation prompt ──
     const layers: string[] = [];
 
-    // ── Reference Image Tag ──
-    if (scene.charSheet) layers.push("<character_reference_image>");
-
-    // ── LAYER 1: Core Action & Subject ──
-    // Who is there and what is the central conflict or emotion?
+    // LAYER 1: Core Action & Subject
     const layer1Parts: string[] = [];
     if (scene.subject?.trim()) layer1Parts.push(scene.subject.trim());
     if (scene.setting?.trim()) {
@@ -326,39 +379,28 @@ export function buildPrompt(options: PromptBuilderOptions): string {
     }
     if (layer1Parts.length) layers.push(layer1Parts.join(', '));
 
-    // ── LAYER 2: Spatial & Color Structure (Block Method) ──
-    // Depth staging, color relationships, composition
+    // LAYER 2: Spatial & Color Structure
     const layer2Parts: string[] = [];
-
     const compDesc = buildCompositionDescription(composition);
     if (compDesc) layer2Parts.push(compDesc);
-
     const locDesc = buildLocationTimeDescription(location);
     if (locDesc) layer2Parts.push(locDesc);
-
     if (layer2Parts.length) layers.push(layer2Parts.join(', '));
 
-    // ── LAYER 3: Lighting & Atmosphere ──
-    // Every light source is intentional — color, intensity, direction
+    // LAYER 3: Lighting & Atmosphere
     const lightDesc = buildLightingDescription(lighting);
     if (lightDesc) layers.push(lightDesc);
 
-    // ── LAYER 4: Technical Specs ──
-    // Lens, film stock, camera angle, aspect ratio
+    // LAYER 4: Technical Specs
     const layer4Parts: string[] = [];
-
     const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
     layer4Parts.push(`camera positioned at ${angleDesc}`);
-
     const lensData = lenses.find(l => l.id === scene.lens);
     if (lensData) layer4Parts.push(`shot on ${lensData.name} lens`);
-
     const filmData = filmStocks.find(f => f.id === scene.filmStock);
     if (filmData) layer4Parts.push(filmData.prompt);
-
     layer4Parts.push("detailed textures, professional cinematic composition");
     layer4Parts.push(`--ar ${scene.aspectRatio}`);
-
     layers.push(layer4Parts.join(', '));
 
     let prompt = layers.join('. ');
@@ -368,38 +410,55 @@ export function buildPrompt(options: PromptBuilderOptions): string {
 export function buildPromptSegments(options: PromptBuilderOptions) {
     const { camera, scene, lighting, composition, location } = options;
     const segments: { type: string; content: string }[] = [];
+    const isEdit = !!scene.charSheet;
 
-    if (scene.charSheet) segments.push({ type: 'reference', content: '<character_reference_image>' });
+    if (isEdit) {
+        segments.push({ type: 'reference', content: '<character_reference_image>' });
+        segments.push({ type: 'reference', content: 'Using this reference image as the base' });
+    }
 
-    // Layer 1: Core Action & Subject
-    const subjectParts: string[] = [];
-    if (scene.subject?.trim()) subjectParts.push(scene.subject.trim());
-    const locDescCheck = buildLocationTimeDescription(location);
-    if (!locDescCheck && scene.setting?.trim()) subjectParts.push(`set in ${scene.setting.trim()}`);
-    if (subjectParts.length) segments.push({ type: 'subject', content: subjectParts.join(', ') });
+    // Subject
+    if (scene.subject?.trim()) {
+        segments.push({ type: 'subject', content: isEdit ? `change the subject to: ${scene.subject.trim()}` : scene.subject.trim() });
+    }
 
-    // Layer 2: Spatial & Color Structure
-    const compDesc = buildCompositionDescription(composition);
-    if (compDesc) segments.push({ type: 'composition', content: compDesc });
-
+    // Setting/Location
     const locDesc = buildLocationTimeDescription(location);
-    if (locDesc) segments.push({ type: 'location', content: locDesc });
+    if (locDesc) {
+        segments.push({ type: 'location', content: isEdit ? `move the setting to ${locDesc.replace(/^in /, '')}` : locDesc });
+    } else if (scene.setting?.trim()) {
+        segments.push({ type: 'location', content: isEdit ? `change the environment to ${scene.setting.trim()}` : `set in ${scene.setting.trim()}` });
+    }
 
-    // Layer 3: Lighting & Atmosphere
+    // Composition
+    const compDesc = buildCompositionDescription(composition);
+    if (compDesc) {
+        segments.push({ type: 'composition', content: isEdit ? `adjust the composition: ${compDesc}` : compDesc });
+    }
+
+    // Lighting
     const lightDesc = buildLightingDescription(lighting);
-    if (lightDesc) segments.push({ type: 'lighting', content: lightDesc });
+    if (lightDesc) {
+        segments.push({ type: 'lighting', content: isEdit ? `change the lighting to: ${lightDesc}` : lightDesc });
+    }
 
-    // Layer 4: Technical Specs
+    // Camera angle
     const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-    segments.push({ type: 'camera', content: `camera positioned at ${angleDesc}` });
+    segments.push({ type: 'camera', content: isEdit ? `reposition the camera to ${angleDesc}` : `camera positioned at ${angleDesc}` });
 
+    // Lens
     const lensData = lenses.find(l => l.id === scene.lens);
-    if (lensData) segments.push({ type: 'camera', content: `shot on ${lensData.name} lens` });
+    if (lensData) {
+        segments.push({ type: 'camera', content: isEdit ? `shoot on ${lensData.name} lens` : `shot on ${lensData.name} lens` });
+    }
 
+    // Film stock
     const filmData = filmStocks.find(f => f.id === scene.filmStock);
-    if (filmData) segments.push({ type: 'quality', content: filmData.prompt });
+    if (filmData) {
+        segments.push({ type: 'quality', content: isEdit ? `apply ${filmData.prompt}` : filmData.prompt });
+    }
 
-    segments.push({ type: 'quality', content: 'detailed textures, professional cinematic composition' });
+    segments.push({ type: 'quality', content: isEdit ? 'maintain detailed textures and professional cinematic composition' : 'detailed textures, professional cinematic composition' });
     segments.push({ type: 'parameters', content: `--ar ${scene.aspectRatio}` });
 
     return segments;
