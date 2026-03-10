@@ -97,10 +97,10 @@ function hexToColorName(hex: string): string {
         '#4ecdc4': 'teal cyan',
         '#ff00ff': 'vivid magenta',
         '#ffaa00': 'amber orange',
-        '#00ff88': 'neon green',
+        '#00ff88': 'bright green',
         '#88aaff': 'soft blue',
         '#ffaa44': 'warm amber',
-        '#ff9933': 'candlelight orange',
+        '#ff9933': 'warm orange',
         '#aaccff': 'sky blue',
         '#00ffaa': 'electric mint',
     };
@@ -206,10 +206,10 @@ function buildLightingDescription(lighting: LightingData): string {
     if (lighting.practicalLight.enabled && lighting.practicalType !== 'none') {
         const colorName = hexToColorName(lighting.practicalLight.color);
         const descs: Record<string, string> = {
-            'neon': `${colorName} neon light casting colored ambiance`,
-            'candle': `${colorName} candlelight with flickering warmth`,
-            'window': `${colorName} natural window light spilling in`,
-            'screen': `${colorName} screen glow illuminating faces`,
+            'neon': `${colorName} glowing colored light ambiance`,
+            'candle': `warm ${colorName} flickering soft light`,
+            'window': `${colorName} diffused directional light`,
+            'screen': `cool ${colorName} electronic glow`,
         };
         parts.push(descs[lighting.practicalType] || `${colorName} practical lighting`);
     }

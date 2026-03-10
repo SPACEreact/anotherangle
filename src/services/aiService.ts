@@ -41,15 +41,19 @@ export async function analyzeImage(imageDataUrl: string): Promise<ImageAnalysis 
                 contents: [{
                     parts: [
                         {
-                            text: `Analyze this image for AI image generation, including the camera angle/perspective. Return ONLY valid JSON:
+                            text: `You are a cinematographer analyzing this image to recreate its composition in an AI image generator.
+
+Describe each element as if writing an AI image generation prompt — use visual, descriptive, telling language.
+
+Return ONLY valid JSON:
 {
-  "foreground":"elements in front",
-  "midground":"main subject",
-  "background":"distant elements",
-  "lighting":"lighting style",
+  "foreground":"describe what is in the foreground in a way that tells an AI to recreate it (e.g., 'rain-streaked glass pane with soft bokeh droplets')",
+  "midground":"describe the main subject/action in a compositional, instructional way (e.g., 'lone figure in a dark trenchcoat standing at a crosswalk, half-lit by a street lamp')",
+  "background":"describe background elements compositionally (e.g., 'layered city skyline dissolving into fog, scattered warm window lights')",
+  "lighting":"describe the lighting setup using only tonal/technical terms — no object names like candle or neon, just color tones and directions (e.g., 'warm amber key from upper left, cool blue fill from right, strong rim light separation')",
   "mood":"one word mood",
   "timeOfDay":"dawn/day/dusk/night",
-  "location":"where this appears to be",
+  "location":"the type of environment/setting (e.g., 'rain-soaked urban intersection')",
   "cameraAngle": {
     "azimuth": "horizontal angle 0-360 degrees (0=front view, 90=left side, 180=back, 270=right side)",
     "elevation": "vertical angle -90 to 90 degrees (negative=low angle looking up, 0=eye level, positive=high angle looking down)",
