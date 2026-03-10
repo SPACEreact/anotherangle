@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Copy, Check, Edit3, X, Wand2 } from 'lucide-react';
+import { Copy, Check, Edit3, X, Wand2, Layers } from 'lucide-react';
 import { Card } from '../ui/Card';
 import { Button } from '../ui/Button';
 import { usePromptGenerator } from '../../hooks/usePromptGenerator';
@@ -15,11 +15,12 @@ import { useLightingStore } from '../../stores/useLightingStore';
 import { motion } from 'framer-motion';
 
 export function PromptOutput() {
-    const { prompt } = usePromptGenerator();
+    const { prompt, segments } = usePromptGenerator();
     const [copied, setCopied] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
     const [editedPrompt, setEditedPrompt] = useState('');
     const [isParsing, setIsParsing] = useState(false);
+    const [showSegments, setShowSegments] = useState(false);
     const addNotification = useUIStore((state) => state.addNotification);
 
     // Store setters
@@ -160,6 +161,16 @@ export function PromptOutput() {
                         {isEditing ? 'Edit Prompt' : 'Final Prompt'}
                     </span>
                     <div className="flex items-center gap-2">
+                        {!isEditing && (
+                            <button
+                                onClick={() => setShowSegments(!showSegments)}
+                                className={`text-[10px] flex items-center gap-1 transition-colors ${showSegments ? 'text-cyan-400' : 'text-zinc-500 hover:text-zinc-300'}`}
+                                title="Toggle segment view"
+                            >
+                                <Layers size={10} />
+                                {showSegments ? 'Segments' : 'Plain'}
+                            </button>
+                        )}
                         <button
                             onClick={handleEditToggle}
                             className="text-[10px] flex items-center gap-1 text-primary-400 hover:text-primary-300 transition-colors"
@@ -188,6 +199,37 @@ export function PromptOutput() {
                         className="flex-1 p-3 rounded-lg font-mono text-xs leading-5 overflow-y-auto custom-scrollbar mb-4 bg-zinc-950 text-primary-100 border border-primary-500/50 focus:border-primary-400 focus:outline-none resize-none"
                         placeholder="Enter or paste a prompt to reverse-parse and populate settings..."
                     />
+                ) : showSegments ? (
+                    <div className="flex-1 p-3 rounded-lg text-xs leading-6 overflow-y-auto custom-scrollbar mb-4 bg-zinc-950 border border-zinc-800">
+                        {segments.map((seg, i) => {
+                            const colorMap: Record<string, string> = {
+                                reference: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
+                                subject: 'bg-blue-500/20 text-blue-300 border-blue-500/30',
+                                composition: 'bg-green-500/20 text-green-300 border-green-500/30',
+                                location: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
+                                lighting: 'bg-yellow-500/20 text-yellow-300 border-yellow-500/30',
+                                camera: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
+                                quality: 'bg-zinc-500/20 text-zinc-300 border-zinc-500/30',
+                                parameters: 'bg-pink-500/20 text-pink-300 border-pink-500/30',
+                            };
+                            const labelMap: Record<string, string> = {
+                                reference: 'REF',
+                                subject: 'SUBJ',
+                                composition: 'COMP',
+                                location: 'LOC',
+                                lighting: 'LIGHT',
+                                camera: 'CAM',
+                                quality: 'QUAL',
+                                parameters: 'PARAM',
+                            };
+                            return (
+                                <span key={i} className={`inline-block mr-1 mb-1 px-1.5 py-0.5 rounded border ${colorMap[seg.type] || 'bg-zinc-800 text-zinc-400'}`}>
+                                    <span className="text-[8px] font-bold uppercase opacity-60 mr-1">{labelMap[seg.type] || seg.type}</span>
+                                    {seg.content}
+                                </span>
+                            );
+                        })}
+                    </div>
                 ) : (
                     <div className="flex-1 p-3 rounded-lg font-mono text-xs leading-5 overflow-y-auto custom-scrollbar mb-4 bg-zinc-950 text-primary-100 border border-zinc-800">
                         {prompt}

@@ -98,11 +98,30 @@ export async function enhancePrompt(prompt: string): Promise<PromptEnhancement |
             body: JSON.stringify({
                 contents: [{
                     parts: [{
-                        text: `Enhance this AI image prompt for better results:
+                        text: `You are a collaborative Cinematographer and Production Designer.
+
+Core Philosophy: "Every Object is Evidence." — every element must serve one of three purposes:
+1. Reveal Character (e.g., overflowing ashtray, meticulous bookshelf)
+2. Support Theme/Mood (e.g., oppressive painting in a tense scene)
+3. Direct the Eye (e.g., a cat in a patch of light as secondary focal point)
+
+TASK: Enhance this AI image generation prompt by ONLY improving its descriptive quality.
+
+STRICT RULES — YOU MUST FOLLOW ALL:
+- Do NOT add any new subjects, objects, characters, or scene elements
+- Do NOT remove any existing subjects, objects, or elements
+- Do NOT change the location, setting, time period, or era
+- Do NOT change the camera angle, lens, or film stock
+- Do NOT change the aspect ratio or technical parameters
+- ONLY refine: word choice, visual specificity, lighting precision, texture descriptions, cinematic terminology, atmosphere language
+- Make descriptions more evocative using film industry language
+- Tighten phrasing for AI image generators (Midjourney/DALL-E/Stable Diffusion)
+
+Original prompt:
 "${prompt}"
 
 Return ONLY valid JSON:
-{"enhanced":"improved prompt text","tips":["tip 1","tip 2","tip 3"]}`
+{"enhanced":"the refined prompt with same elements but better descriptions","tips":["cinematography tip 1","technical tip 2","composition tip 3"]}`
                     }]
                 }]
             })

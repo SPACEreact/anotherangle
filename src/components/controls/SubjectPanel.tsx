@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { Layers, ImageIcon, X, Sparkles, Loader2 } from 'lucide-react';
 import { Card, CardHeader } from '../ui/Card';
 import { useSceneStore } from '../../stores/useSceneStore';
 import { useCompositionStore } from '../../stores/useCompositionStore';
 import { useCameraStore } from '../../stores/useCameraStore';
+import { useLightingStore } from '../../stores/useLightingStore';
 import { analyzeImage } from '../../services/aiService';
 import { motion } from 'framer-motion';
 
@@ -14,7 +15,9 @@ export function SubjectPanel() {
     const setCharSheet = useSceneStore((state) => state.setCharSheet);
     const { setForeground, setMidground, setBackground } = useCompositionStore();
     const setAngles = useCameraStore((state) => state.setAngles);
+    const { setVolumetric, setKeyLight, setFillLight, setBackLight } = useLightingStore();
 
+    const fileInputRef = useRef<HTMLInputElement>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisResult, setAnalysisResult] = useState<string | null>(null);
 
@@ -38,7 +41,11 @@ export function SubjectPanel() {
                 if (analysis) {
                     // Apply analysis to composition layers
                     if (analysis.foreground) setForeground({ description: analysis.foreground });
-                    if (analysis.midground) setMidground({ description: analysis.midground });
+                    if (analysis.midground) {
+                        setMidground({ description: analysis.midground });
+                        // Also update the subject with what the AI detected in the main scene area
+                        setSubject(analysis.midground);
+                    }
                     if (analysis.background) setBackground({ description: analysis.background });
                     if (analysis.location) setSetting(analysis.location);
 
@@ -49,6 +56,30 @@ export function SubjectPanel() {
                             elevation: analysis.cameraAngle.elevation,
                             roll: analysis.cameraAngle.roll,
                         });
+                    }
+
+                    // Apply lighting mood from analysis
+                    if (analysis.lighting) {
+                        const lightingLower = analysis.lighting.toLowerCase();
+                        // Detect if volumetric/foggy atmosphere
+                        if (lightingLower.includes('fog') || lightingLower.includes('haze') || lightingLower.includes('mist') || lightingLower.includes('volumetric')) {
+                            setVolumetric(true);
+                        }
+                        // Detect warm vs cool key lighting
+                        if (lightingLower.includes('warm') || lightingLower.includes('golden') || lightingLower.includes('candle')) {
+                            setKeyLight({ color: '#ffaa44' });
+                        } else if (lightingLower.includes('cool') || lightingLower.includes('blue') || lightingLower.includes('moonlight')) {
+                            setKeyLight({ color: '#88aaff' });
+                        }
+                        // Detect high contrast / dramatic
+                        if (lightingLower.includes('dramatic') || lightingLower.includes('contrast') || lightingLower.includes('chiaroscuro')) {
+                            setKeyLight({ intensity: 1.5 });
+                            setFillLight({ intensity: 0.2 });
+                        }
+                        // Detect back/rim lighting
+                        if (lightingLower.includes('rim') || lightingLower.includes('backlit') || lightingLower.includes('silhouette')) {
+                            setBackLight({ enabled: true, intensity: 1.0 });
+                        }
                     }
 
                     setAnalysisResult(`🎨 ${analysis.mood} mood, ${analysis.lighting}, ${analysis.timeOfDay}`);
@@ -67,6 +98,10 @@ export function SubjectPanel() {
     const clearImage = () => {
         setCharSheet(null);
         setAnalysisResult(null);
+        // Reset file input so the same file can be re-uploaded
+        if (fileInputRef.current) {
+            fileInputRef.current.value = '';
+        }
     };
 
     return (
@@ -106,12 +141,17 @@ export function SubjectPanel() {
                 {/* Character Reference Upload */}
                 <div className="relative group cursor-pointer border-2 border-dashed rounded-lg h-28 flex items-center justify-center overflow-hidden transition-all border-zinc-700 hover:border-primary-500 bg-zinc-950">
                     <input
+                        ref={fileInputRef}
                         type="file"
                         accept="image/*"
                         className="absolute inset-0 opacity-0 cursor-pointer z-10"
                         onChange={(e) => {
                             const file = e.target.files?.[0];
-                            if (file) handleUpload(file);
+                            if (file) {
+                                handleUpload(file);
+                                // Reset input value so uploading same file triggers onChange again
+                                if (fileInputRef.current) fileInputRef.current.value = '';
+                            }
                         }}
                     />
                     {charSheet ? (

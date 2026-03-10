@@ -83,40 +83,148 @@ function applySmartFilter(prompt: string, enabled: boolean): string {
     return result.replace(/,\s*,/g, ',').replace(/,\s*$/g, '').replace(/^\s*,/g, '').trim();
 }
 
+// ─── Color Utilities ───────────────────────────────────────────────────────────
+
+/**
+ * Convert a hex color to a descriptive color name for the prompt.
+ */
+function hexToColorName(hex: string): string {
+    const colorMap: Record<string, string> = {
+        '#ffffff': 'pure white',
+        '#fff5e6': 'warm golden-white',
+        '#e6f0ff': 'cool daylight blue',
+        '#ff6b6b': 'crimson red',
+        '#4ecdc4': 'teal cyan',
+        '#ff00ff': 'vivid magenta',
+        '#ffaa00': 'amber orange',
+        '#00ff88': 'neon green',
+        '#88aaff': 'soft blue',
+        '#ffaa44': 'warm amber',
+        '#ff9933': 'candlelight orange',
+        '#aaccff': 'sky blue',
+        '#00ffaa': 'electric mint',
+    };
+
+    const exact = colorMap[hex.toLowerCase()];
+    if (exact) return exact;
+
+    // Parse hex and determine color family
+    const r = parseInt(hex.slice(1, 3), 16);
+    const g = parseInt(hex.slice(3, 5), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    const lum = (max + min) / 2;
+
+    if (max - min < 30) {
+        if (lum > 200) return 'white';
+        if (lum > 140) return 'light gray';
+        if (lum > 80) return 'gray';
+        return 'dark charcoal';
+    }
+
+    // Determine rough hue
+    if (r > g && r > b) {
+        if (g > 150) return 'warm golden';
+        if (g > 80) return 'warm orange';
+        return 'deep red';
+    }
+    if (g > r && g > b) {
+        if (b > 150) return 'cyan-green';
+        return 'green';
+    }
+    if (b > r && b > g) {
+        if (r > 150) return 'lavender';
+        if (r > 80) return 'violet';
+        return 'deep blue';
+    }
+    if (r > 200 && g < 100 && b > 200) return 'magenta';
+    if (r > 200 && g > 200 && b < 100) return 'golden yellow';
+
+    return 'colored';
+}
+
+/**
+ * Get color temperature description
+ */
+function getColorTemperature(hex: string): string {
+    const r = parseInt(hex.slice(1, 3), 16);
+    const b = parseInt(hex.slice(5, 7), 16);
+    const diff = r - b;
+
+    if (diff > 100) return 'warm-toned';
+    if (diff > 40) return 'slightly warm';
+    if (diff < -100) return 'cool-toned';
+    if (diff < -40) return 'slightly cool';
+    return 'neutral';
+}
+
+/**
+ * Get intensity description with more granularity
+ */
+function getIntensityDesc(intensity: number): string {
+    if (intensity >= 1.8) return 'blazing';
+    if (intensity >= 1.4) return 'intense';
+    if (intensity >= 1.0) return 'strong';
+    if (intensity >= 0.7) return 'moderate';
+    if (intensity >= 0.4) return 'gentle';
+    if (intensity >= 0.2) return 'subtle';
+    return 'faint';
+}
+
+// ─── Lighting Description Builder ──────────────────────────────────────────────
+
 function buildLightingDescription(lighting: LightingData): string {
     const parts: string[] = [];
 
     if (lighting.keyLight.enabled) {
-        const intensity = lighting.keyLight.intensity > 1 ? 'dramatic' :
-            lighting.keyLight.intensity < 0.5 ? 'soft' : 'balanced';
-        parts.push(`${intensity} key light`);
+        const colorName = hexToColorName(lighting.keyLight.color);
+        const intensityDesc = getIntensityDesc(lighting.keyLight.intensity);
+        const tempDesc = getColorTemperature(lighting.keyLight.color);
+        parts.push(`${intensityDesc} ${tempDesc} ${colorName} key light`);
     }
 
     if (lighting.fillLight.enabled) {
+        const colorName = hexToColorName(lighting.fillLight.color);
         const ratio = lighting.keyLight.intensity / Math.max(0.1, lighting.fillLight.intensity);
-        if (ratio > 3) parts.push('high contrast lighting');
-        else if (ratio > 2) parts.push('cinematic lighting ratio');
-        else parts.push('low contrast fill');
+        let contrastDesc: string;
+        if (ratio > 4) contrastDesc = 'extreme contrast';
+        else if (ratio > 3) contrastDesc = 'high contrast chiaroscuro';
+        else if (ratio > 2) contrastDesc = 'cinematic contrast ratio';
+        else if (ratio > 1.2) contrastDesc = 'moderate contrast';
+        else contrastDesc = 'flat low-contrast';
+        parts.push(`${colorName} fill light creating ${contrastDesc}`);
     }
 
-    if (lighting.backLight.enabled) parts.push('rim lighting');
+    if (lighting.backLight.enabled) {
+        const colorName = hexToColorName(lighting.backLight.color);
+        const intensityDesc = getIntensityDesc(lighting.backLight.intensity);
+        parts.push(`${intensityDesc} ${colorName} rim/back light`);
+    }
 
     if (lighting.practicalLight.enabled && lighting.practicalType !== 'none') {
+        const colorName = hexToColorName(lighting.practicalLight.color);
         const descs: Record<string, string> = {
-            'neon': 'neon light ambiance', 'candle': 'candlelight glow',
-            'window': 'natural window light', 'screen': 'screen glow',
+            'neon': `${colorName} neon light casting colored ambiance`,
+            'candle': `${colorName} candlelight with flickering warmth`,
+            'window': `${colorName} natural window light spilling in`,
+            'screen': `${colorName} screen glow illuminating faces`,
         };
-        parts.push(descs[lighting.practicalType] || 'practical lighting');
+        parts.push(descs[lighting.practicalType] || `${colorName} practical lighting`);
     }
 
     if (lighting.volumetric) {
-        if (lighting.fogDensity > 0.1) parts.push('heavy volumetric fog');
-        else if (lighting.fogDensity > 0.05) parts.push('volumetric haze');
-        else parts.push('atmospheric depth');
+        const fogColorName = hexToColorName(lighting.fogColor);
+        if (lighting.fogDensity > 0.1) parts.push(`heavy ${fogColorName} volumetric fog`);
+        else if (lighting.fogDensity > 0.05) parts.push(`${fogColorName} volumetric haze`);
+        else parts.push(`subtle ${fogColorName} atmospheric depth`);
     }
 
     return parts.join(', ');
 }
+
+// ─── Composition Description Builder ───────────────────────────────────────────
 
 function buildCompositionDescription(comp: CompositionData): string {
     const parts: string[] = [];
@@ -146,6 +254,8 @@ function buildCompositionDescription(comp: CompositionData): string {
 
     return parts.join(', ');
 }
+
+// ─── Location / Time Description Builder ───────────────────────────────────────
 
 function buildLocationTimeDescription(loc: LocationData): string {
     const parts: string[] = [];
@@ -195,38 +305,63 @@ function buildLocationTimeDescription(loc: LocationData): string {
     return parts.join(', ');
 }
 
+// ─── Main Prompt Builder (4-Layer Cinematic Structure) ─────────────────────────
+
 export function buildPrompt(options: PromptBuilderOptions): string {
     const { camera, scene, lighting, composition, location } = options;
-    const segments: string[] = [];
+    const layers: string[] = [];
 
-    if (scene.charSheet) segments.push("<character_reference_image>");
+    // ── Reference Image Tag ──
+    if (scene.charSheet) layers.push("<character_reference_image>");
+
+    // ── LAYER 1: Core Action & Subject ──
+    // Who is there and what is the central conflict or emotion?
+    const layer1Parts: string[] = [];
+    if (scene.subject?.trim()) layer1Parts.push(scene.subject.trim());
+    if (scene.setting?.trim()) {
+        const locDesc = buildLocationTimeDescription(location);
+        if (!locDesc) {
+            layer1Parts.push(`set in ${scene.setting.trim()}`);
+        }
+    }
+    if (layer1Parts.length) layers.push(layer1Parts.join(', '));
+
+    // ── LAYER 2: Spatial & Color Structure (Block Method) ──
+    // Depth staging, color relationships, composition
+    const layer2Parts: string[] = [];
+
+    const compDesc = buildCompositionDescription(composition);
+    if (compDesc) layer2Parts.push(compDesc);
+
+    const locDesc = buildLocationTimeDescription(location);
+    if (locDesc) layer2Parts.push(locDesc);
+
+    if (layer2Parts.length) layers.push(layer2Parts.join(', '));
+
+    // ── LAYER 3: Lighting & Atmosphere ──
+    // Every light source is intentional — color, intensity, direction
+    const lightDesc = buildLightingDescription(lighting);
+    if (lightDesc) layers.push(lightDesc);
+
+    // ── LAYER 4: Technical Specs ──
+    // Lens, film stock, camera angle, aspect ratio
+    const layer4Parts: string[] = [];
 
     const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-    segments.push(`camera positioned at ${angleDesc}, ${scene.subject}`);
+    layer4Parts.push(`camera positioned at ${angleDesc}`);
 
     const lensData = lenses.find(l => l.id === scene.lens);
-    if (lensData) segments.push(`shot on ${lensData.name} lens`);
-
-    // Composition - now passed directly
-    const compDesc = buildCompositionDescription(composition);
-    if (compDesc) segments.push(compDesc);
-
-    // Location - now passed directly
-    const locDesc = buildLocationTimeDescription(location);
-    if (locDesc) segments.push(locDesc);
-
-    if (!locDesc && scene.setting?.trim()) segments.push(`set in ${scene.setting}`);
-
-    const lightDesc = buildLightingDescription(lighting);
-    if (lightDesc) segments.push(lightDesc);
+    if (lensData) layer4Parts.push(`shot on ${lensData.name} lens`);
 
     const filmData = filmStocks.find(f => f.id === scene.filmStock);
-    if (filmData) segments.push(filmData.prompt);
+    if (filmData) layer4Parts.push(filmData.prompt);
 
-    segments.push("detailed textures, professional composition");
-    segments.push(`--ar ${scene.aspectRatio}`);
+    layer4Parts.push("detailed textures, professional cinematic composition");
+    layer4Parts.push(`--ar ${scene.aspectRatio}`);
 
-    const prompt = segments.join(", ");
+    layers.push(layer4Parts.join(', '));
+
+    let prompt = layers.join('. ');
     return applySmartFilter(prompt, location.smartFilterEnabled);
 }
 
@@ -236,27 +371,35 @@ export function buildPromptSegments(options: PromptBuilderOptions) {
 
     if (scene.charSheet) segments.push({ type: 'reference', content: '<character_reference_image>' });
 
-    const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-    segments.push({ type: 'subject', content: `camera positioned at ${angleDesc}, ${scene.subject}` });
+    // Layer 1: Core Action & Subject
+    const subjectParts: string[] = [];
+    if (scene.subject?.trim()) subjectParts.push(scene.subject.trim());
+    const locDescCheck = buildLocationTimeDescription(location);
+    if (!locDescCheck && scene.setting?.trim()) subjectParts.push(`set in ${scene.setting.trim()}`);
+    if (subjectParts.length) segments.push({ type: 'subject', content: subjectParts.join(', ') });
 
-    const lensData = lenses.find(l => l.id === scene.lens);
-    if (lensData) segments.push({ type: 'camera', content: `shot on ${lensData.name} lens` });
-
+    // Layer 2: Spatial & Color Structure
     const compDesc = buildCompositionDescription(composition);
     if (compDesc) segments.push({ type: 'composition', content: compDesc });
 
     const locDesc = buildLocationTimeDescription(location);
     if (locDesc) segments.push({ type: 'location', content: locDesc });
 
-    if (!locDesc && scene.setting?.trim()) segments.push({ type: 'setting', content: `set in ${scene.setting}` });
-
+    // Layer 3: Lighting & Atmosphere
     const lightDesc = buildLightingDescription(lighting);
     if (lightDesc) segments.push({ type: 'lighting', content: lightDesc });
+
+    // Layer 4: Technical Specs
+    const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
+    segments.push({ type: 'camera', content: `camera positioned at ${angleDesc}` });
+
+    const lensData = lenses.find(l => l.id === scene.lens);
+    if (lensData) segments.push({ type: 'camera', content: `shot on ${lensData.name} lens` });
 
     const filmData = filmStocks.find(f => f.id === scene.filmStock);
     if (filmData) segments.push({ type: 'quality', content: filmData.prompt });
 
-    segments.push({ type: 'quality', content: 'detailed textures, professional composition' });
+    segments.push({ type: 'quality', content: 'detailed textures, professional cinematic composition' });
     segments.push({ type: 'parameters', content: `--ar ${scene.aspectRatio}` });
 
     return segments;
