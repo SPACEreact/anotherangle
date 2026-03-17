@@ -96,13 +96,42 @@ export interface EditorState {
   sharp: number;
   tex: number;
   mblur: number;
+
+  // Typography
+  textNode: string;
+  textStyle: string;
+  textPlacement: string;
+  textRotoscope: boolean;
+
+  // Composition
+  compRule: string;
+  framing: string;
+
+  // Advanced Optics
+  aperture: string;
+  filmStock: string;
+  opticsEffects: string[];
+
+  // Physics & Lighting
+  globalIllum: boolean;
+  volumetrics: string;
+  materialPhysics: string[];
+
+  // Negative
   neg: string;
-  imageDataUrl: string | null;
+
+  // Image upload
+  referenceImages: string[];
   isAnalyzing: boolean;
+  
   set: (partial: Partial<EditorState>) => void;
   toggleMood: (mood: string) => void;
   toggleGrade: (grade: string) => void;
-  setImageDataUrl: (url: string | null) => void;
+  toggleOptics: (effect: string) => void;
+  togglePhysics: (effect: string) => void;
+  
+  addReferenceImage: (url: string) => void;
+  removeReferenceImage: (index: number) => void;
   setIsAnalyzing: (v: boolean) => void;
   buildPrompt: () => string;
 }
@@ -141,9 +170,25 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   tex: 65,
   mblur: 10,
 
+  textNode: '',
+  textStyle: 'neon sign',
+  textPlacement: 'centered',
+  textRotoscope: false,
+
+  compRule: 'unspecified',
+  framing: 'unspecified',
+
+  aperture: 'f/4',
+  filmStock: 'none',
+  opticsEffects: [],
+
+  globalIllum: false,
+  volumetrics: 'none',
+  materialPhysics: [],
+
   neg: '',
 
-  imageDataUrl: null,
+  referenceImages: [],
   isAnalyzing: false,
 
   set: (partial) => set(partial),
@@ -155,7 +200,23 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((s) => ({
       grades: s.grades.includes(grade) ? s.grades.filter((g) => g !== grade) : [...s.grades, grade],
     })),
-  setImageDataUrl: (url) => set({ imageDataUrl: url }),
+  toggleOptics: (effect) =>
+    set((s) => ({
+      opticsEffects: s.opticsEffects.includes(effect) ? s.opticsEffects.filter((e) => e !== effect) : [...s.opticsEffects, effect],
+    })),
+  togglePhysics: (effect) =>
+    set((s) => ({
+      materialPhysics: s.materialPhysics.includes(effect) ? s.materialPhysics.filter((e) => e !== effect) : [...s.materialPhysics, effect],
+    })),
+  addReferenceImage: (url) => 
+    set((s) => {
+      if (s.referenceImages.length >= 14) return s; // NB2 supports up to 14
+      return { referenceImages: [...s.referenceImages, url] }
+    }),
+  removeReferenceImage: (index) =>
+    set((s) => ({
+      referenceImages: s.referenceImages.filter((_, i) => i !== index)
+    })),
   setIsAnalyzing: (v) => set({ isAnalyzing: v }),
 
   buildPrompt: () => {
@@ -190,18 +251,27 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
     parts.push(`${s.shotType} framing, ${lensDesc}`);
 
+    // Optics & Film Stock
+    if (s.aperture !== 'unspecified') parts.push(`shot wide open at ${s.aperture}`);
+    if (s.filmStock !== 'none') parts.push(`shot on ${s.filmStock} film stock`);
+    if (s.opticsEffects.length) parts.push(`optical properties: ${s.opticsEffects.join(', ')}`);
+
     // DOF
     const dofDesc = describeRange(
       s.dof,
-      'extremely shallow depth of field with f/1.4 wide-open bokeh, subject razor-sharp against a creamy blurred background',
-      'moderate depth of field at f/4, subject in focus with soft background separation',
-      'deep focus at f/11, entire scene rendered tack-sharp from near to far'
+      'extremely shallow depth of field with creamy bokeh, subject razor-sharp against a heavily blurred background',
+      'moderate depth of field, subject in focus with soft background separation',
+      'deep focus, entire scene rendered tack-sharp from near to far'
     );
     parts.push(dofDesc);
 
     if (s.camMove !== 'static') {
       parts.push(`camera performing a ${s.camMove}`);
     }
+
+    // ── COMPOSITION ──
+    if (s.compRule !== 'unspecified') parts.push(`composition follows ${s.compRule}`);
+    if (s.framing !== 'unspecified') parts.push(`framed with ${s.framing}`);
 
     // ── LIGHTING — strong directive language ──
     const lightIntDesc = describeRange(
@@ -219,7 +289,16 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const colorDesc = s.lightColor !== '#ffffff' && s.lightColor !== '#fff5e0'
       ? `, light source tinted ${s.lightColor}`
       : '';
-    parts.push(`${lightIntDesc}, lit by ${s.lightSrc}, ${s.lightDir} ${shadowDesc}${colorDesc}`);
+    let physLightDesc = '';
+    if (s.globalIllum) physLightDesc += ' with global illumination and bounced ambient light';
+    if (s.volumetrics !== 'none') physLightDesc += `, ${s.volumetrics} atmosphere`;
+    
+    parts.push(`${lightIntDesc}, lit by ${s.lightSrc}, ${s.lightDir} ${shadowDesc}${colorDesc}${physLightDesc}`);
+
+    // ── MATERIAL PHYSICS ──
+    if (s.materialPhysics.length) {
+      parts.push(`physical material rendering: ${s.materialPhysics.join(', ')}`);
+    }
 
     // ── TIME OF DAY — always prominent ──
     const todPrompt = TOD_PROMPTS[s.tod] || `${s.tod}`;
@@ -267,6 +346,13 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
     if (s.mblur > 20) {
       parts.push(describeRange(s.mblur, '', 'subtle directional motion blur on moving elements', 'heavy motion blur streaking across moving subjects, 1/15s shutter speed effect'));
+    }
+
+    // ── TYPOGRAPHY ──
+    if (s.textNode.trim()) {
+      let typogDesc = `Explicitly render the text "${s.textNode.trim()}" ${s.textPlacement}, styled as ${s.textStyle}`;
+      if (s.textRotoscope) typogDesc += ' (rotoscoped seamlessly into the scene geometry, interacting with the environment lighting)';
+      parts.push(typogDesc);
     }
 
     // ── NEGATIVE PROMPT ──

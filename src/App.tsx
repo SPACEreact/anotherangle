@@ -11,15 +11,22 @@ import { NegativeSection } from './components/editor/NegativeSection';
 import { UploadZone } from './components/editor/UploadZone';
 import { PromptDisplay } from './components/editor/PromptDisplay';
 
+import { TypographySection } from './components/editor/TypographySection';
+import { CompositionSection } from './components/editor/CompositionSection';
+import { PhysicsSection } from './components/editor/PhysicsSection';
+
 function App() {
   return (
     <div className="app-shell">
       <div className="app-grid">
         {/* LEFT SIDEBAR — All controls */}
         <aside className="sidebar">
+          <TypographySection />
           <SubjectSection />
           <ActionSection />
+          <CompositionSection />
           <CameraSection />
+          <PhysicsSection />
           <LightingSection />
           <MoodSection />
           <StyleSection />
