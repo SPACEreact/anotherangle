@@ -71,3 +71,20 @@ export default defineConfig([
   },
 ])
 ```
+
+
+## Run on GitHub Pages ("GitHub server")
+
+This repo includes `.github/workflows/deploy.yml` to build and deploy `dist/` to GitHub Pages.
+
+### What is configured
+- Vite base path is set to `/anotherangle/` in `vite.config.ts`.
+- A GitHub Actions workflow deploys on push to `main` or `work`.
+- You can also trigger deployment manually from **Actions → Deploy to GitHub Pages** and optionally pass a ref.
+
+### One-time GitHub setup
+1. In your GitHub repository, go to **Settings → Pages**.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Push to `main`/`work` or run the workflow manually.
+
+After the workflow succeeds, the app is served by GitHub Pages.
