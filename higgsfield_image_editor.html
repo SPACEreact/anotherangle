@@ -1,0 +1,389 @@
+
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--font-sans)}
+.app{display:grid;grid-template-columns:340px 1fr;min-height:600px;gap:0;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden;background:var(--color-background-primary)}
+.sidebar{border-right:0.5px solid var(--color-border-tertiary);overflow-y:auto;max-height:700px}
+.main{display:flex;flex-direction:column}
+.upload-zone{border-bottom:0.5px solid var(--color-border-tertiary);padding:16px;display:flex;align-items:center;justify-content:center;min-height:220px;cursor:pointer;position:relative;overflow:hidden;background:var(--color-background-secondary)}
+.upload-zone:hover{background:var(--color-background-tertiary)}
+.upload-zone img{max-height:200px;max-width:100%;border-radius:var(--border-radius-md);object-fit:contain}
+.upload-placeholder{text-align:center;pointer-events:none}
+.upload-placeholder .icon{width:40px;height:40px;border:1.5px dashed var(--color-border-secondary);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-size:18px}
+.upload-placeholder p{font-size:13px;color:var(--color-text-secondary)}
+.upload-placeholder small{font-size:11px;color:var(--color-text-tertiary)}
+.prompt-area{padding:16px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.prompt-out{background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:13px;line-height:1.7;color:var(--color-text-primary);min-height:90px;white-space:pre-wrap;word-break:break-word}
+.prompt-hint{font-size:11px;color:var(--color-text-tertiary);margin-top:6px}
+.copy-btn{margin-top:10px;padding:8px 16px;border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-md);background:transparent;color:var(--color-text-primary);font-size:13px;cursor:pointer;width:100%}
+.copy-btn:hover{background:var(--color-background-secondary)}
+.copy-btn:active{transform:scale(0.98)}
+.section{padding:12px 14px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.section-title{font-size:11px;font-weight:500;color:var(--color-text-tertiary);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px}
+.row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.row label{font-size:12px;color:var(--color-text-secondary);min-width:90px;flex-shrink:0}
+.row input[type=range]{flex:1}
+.row .val{font-size:12px;font-weight:500;color:var(--color-text-primary);min-width:32px;text-align:right}
+.row select{flex:1;font-size:12px;padding:4px 6px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+.tag-group{display:flex;flex-wrap:wrap;gap:6px;margin-top:4px}
+.tag{font-size:11px;padding:4px 10px;border:0.5px solid var(--color-border-tertiary);border-radius:20px;cursor:pointer;color:var(--color-text-secondary);background:var(--color-background-primary);transition:all 0.15s}
+.tag:hover{border-color:var(--color-border-secondary)}
+.tag.active{background:var(--color-text-primary);color:var(--color-background-primary);border-color:var(--color-text-primary)}
+.textarea-wrap textarea{width:100%;font-size:12px;padding:8px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary);resize:vertical;min-height:52px;font-family:var(--font-sans);line-height:1.5}
+.file-input{display:none}
+.top-bar{padding:12px 16px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between}
+.top-bar span{font-size:13px;font-weight:500;color:var(--color-text-primary)}
+.top-bar small{font-size:11px;color:var(--color-text-tertiary)}
+.badge{font-size:10px;padding:2px 8px;border-radius:10px;background:var(--color-background-secondary);color:var(--color-text-secondary);border:0.5px solid var(--color-border-tertiary)}
+.color-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.color-row label{font-size:12px;color:var(--color-text-secondary);min-width:90px}
+.color-row input[type=color]{width:32px;height:24px;border:0.5px solid var(--color-border-tertiary);border-radius:4px;cursor:pointer;padding:2px}
+.color-row input[type=text]{flex:1;font-size:12px;padding:4px 8px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);background:var(--color-background-primary);color:var(--color-text-primary)}
+</style>
+
+<input type="file" id="fileIn" class="file-input" accept="image/*">
+
+<div class="app">
+  <div class="sidebar">
+    <div class="section">
+      <div class="section-title">Subject</div>
+      <div class="textarea-wrap"><textarea id="subject" placeholder="Who or what is in the image? e.g. a woman in a red coat, standing at a rain-soaked window" rows="2"></textarea></div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Action / Motion</div>
+      <div class="textarea-wrap"><textarea id="action" placeholder="What should happen? e.g. slowly turns her head, hair drifting in wind" rows="2"></textarea></div>
+      <div class="row" style="margin-top:10px">
+        <label>Motion speed</label>
+        <input type="range" id="motionSpeed" min="0" max="100" value="40" oninput="upd()">
+        <span class="val" id="motionSpeedV">40</span>
+      </div>
+      <div class="row">
+        <label>Motion direction</label>
+        <select id="motionDir" onchange="upd()">
+          <option>none</option><option>left to right</option><option>right to left</option><option>inward</option><option>outward</option><option>upward</option><option>downward</option><option>circular</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Camera</div>
+      <div class="row">
+        <label>Shot type</label>
+        <select id="shotType" onchange="upd()">
+          <option>extreme close-up</option><option>close-up</option><option>medium close-up</option><option selected>medium shot</option><option>medium wide</option><option>wide shot</option><option>extreme wide</option><option>aerial / bird's eye</option><option>low angle</option><option>high angle</option><option>dutch angle</option><option>over the shoulder</option><option>POV</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Camera move</label>
+        <select id="camMove" onchange="upd()">
+          <option>static</option><option>slow push in</option><option>pull out</option><option>pan left</option><option>pan right</option><option>tilt up</option><option>tilt down</option><option>dolly in</option><option>dolly out</option><option>crane up</option><option>crane down</option><option>orbit left</option><option>orbit right</option><option>handheld drift</option><option>whip pan</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Lens focal mm</label>
+        <select id="lens" onchange="upd()">
+          <option>14mm</option><option>24mm</option><option>35mm</option><option selected>50mm</option><option>85mm</option><option>105mm</option><option>135mm</option><option>200mm</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Depth of field</label>
+        <input type="range" id="dof" min="0" max="100" value="60" oninput="upd()">
+        <span class="val" id="dofV">60</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Lighting</div>
+      <div class="row">
+        <label>Light source</label>
+        <select id="lightSrc" onchange="upd()">
+          <option>natural daylight</option><option>golden hour</option><option>magic hour</option><option>overcast</option><option>moonlight</option><option>neon signs</option><option>practical lamps</option><option>studio softbox</option><option>hard single source</option><option>rim / backlight</option><option>candle / fire</option><option>screen glow</option><option>flash / strobe</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Light direction</label>
+        <select id="lightDir" onchange="upd()">
+          <option>front lit</option><option selected>side lit</option><option>backlit / silhouette</option><option>top lit</option><option>under lit</option><option>diffused all-round</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Intensity</label>
+        <input type="range" id="lightInt" min="0" max="100" value="65" oninput="upd()">
+        <span class="val" id="lightIntV">65</span>
+      </div>
+      <div class="row">
+        <label>Shadow hardness</label>
+        <input type="range" id="shadowH" min="0" max="100" value="50" oninput="upd()">
+        <span class="val" id="shadowHV">50</span>
+      </div>
+      <div class="color-row">
+        <label>Light color</label>
+        <input type="color" id="lightColor" value="#fff5e0" oninput="syncColor()">
+        <input type="text" id="lightColorText" value="#fff5e0" oninput="syncColorText()" maxlength="7" placeholder="#ffffff">
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Mood / Atmosphere</div>
+      <div class="tag-group" id="moodTags">
+        <span class="tag" data-v="melancholic">melancholic</span>
+        <span class="tag" data-v="tense">tense</span>
+        <span class="tag" data-v="serene">serene</span>
+        <span class="tag" data-v="dreamlike">dreamlike</span>
+        <span class="tag" data-v="unsettling">unsettling</span>
+        <span class="tag" data-v="intimate">intimate</span>
+        <span class="tag" data-v="euphoric">euphoric</span>
+        <span class="tag" data-v="cold and clinical">cold &amp; clinical</span>
+        <span class="tag" data-v="warm and nostalgic">warm nostalgic</span>
+        <span class="tag" data-v="ominous">ominous</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Visual Style</div>
+      <div class="row">
+        <label>Style</label>
+        <select id="style" onchange="upd()">
+          <option>photorealistic</option><option>cinematic film grain</option><option>analog / 35mm</option><option>hyperreal</option><option>painterly</option><option>graphic novel</option><option>anime</option><option>3D render</option><option>claymation</option><option>watercolor</option><option>oil painting</option><option>noir</option><option>cyberpunk</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Film grain</label>
+        <input type="range" id="grain" min="0" max="100" value="20" oninput="upd()">
+        <span class="val" id="grainV">20</span>
+      </div>
+      <div class="row">
+        <label>Saturation</label>
+        <input type="range" id="sat" min="0" max="100" value="55" oninput="upd()">
+        <span class="val" id="satV">55</span>
+      </div>
+      <div class="row">
+        <label>Contrast</label>
+        <input type="range" id="cont" min="0" max="100" value="55" oninput="upd()">
+        <span class="val" id="contV">55</span>
+      </div>
+      <div class="row">
+        <label>Color temp</label>
+        <input type="range" id="colorTemp" min="0" max="100" value="50" oninput="upd()">
+        <span class="val" id="colorTempV">50</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Color Grading</div>
+      <div class="tag-group" id="gradeTags">
+        <span class="tag" data-v="teal and orange">teal &amp; orange</span>
+        <span class="tag" data-v="desaturated cold">cold desat</span>
+        <span class="tag" data-v="warm amber skin tones">amber skin</span>
+        <span class="tag" data-v="bleach bypass">bleach bypass</span>
+        <span class="tag" data-v="lifted shadows">lifted shadows</span>
+        <span class="tag" data-v="crushed blacks">crushed blacks</span>
+        <span class="tag" data-v="neon palette">neon</span>
+        <span class="tag" data-v="muted earthy">muted earthy</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Environment</div>
+      <div class="textarea-wrap"><textarea id="env" placeholder="Where is this? e.g. abandoned train station, fog rolling in, broken glass on platform" rows="2"></textarea></div>
+      <div class="row" style="margin-top:8px">
+        <label>Time of day</label>
+        <select id="tod" onchange="upd()">
+          <option>dawn</option><option>morning</option><option>noon</option><option selected>afternoon</option><option>golden hour</option><option>dusk</option><option>night</option><option>deep night</option>
+        </select>
+      </div>
+      <div class="row">
+        <label>Weather</label>
+        <select id="weather" onchange="upd()">
+          <option selected>clear</option><option>overcast</option><option>fog</option><option>heavy fog</option><option>rain</option><option>storm</option><option>snow</option><option>heat haze</option><option>dust storm</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Detail Level</div>
+      <div class="row">
+        <label>Sharpness</label>
+        <input type="range" id="sharp" min="0" max="100" value="70" oninput="upd()">
+        <span class="val" id="sharpV">70</span>
+      </div>
+      <div class="row">
+        <label>Texture detail</label>
+        <input type="range" id="tex" min="0" max="100" value="65" oninput="upd()">
+        <span class="val" id="texV">65</span>
+      </div>
+      <div class="row">
+        <label>Motion blur</label>
+        <input type="range" id="mblur" min="0" max="100" value="10" oninput="upd()">
+        <span class="val" id="mblurV">10</span>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section-title">Negative prompt (exclude)</div>
+      <div class="textarea-wrap"><textarea id="neg" placeholder="e.g. blur, overexposed, cartoon, watermark, distorted face" rows="2"></textarea></div>
+    </div>
+  </div>
+
+  <div class="main">
+    <div class="top-bar">
+      <span>Higgsfield-style editor</span>
+      <span class="badge">prompt generator</span>
+    </div>
+    <div class="upload-zone" id="dropZone" onclick="document.getElementById('fileIn').click()">
+      <div class="upload-placeholder" id="placeholder">
+        <div class="icon">+</div>
+        <p>Upload image</p>
+        <small>click or drag &amp; drop</small>
+      </div>
+      <img id="preview" style="display:none">
+    </div>
+    <div class="prompt-area">
+      <div class="prompt-out" id="promptOut">Set parameters on the left → your prompt appears here.</div>
+      <div class="prompt-hint">Copy this into Higgsfield, Kling, Runway, or any image-to-video tool.</div>
+      <button class="copy-btn" onclick="copyPrompt()">Copy prompt</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const fileIn = document.getElementById('fileIn');
+const preview = document.getElementById('preview');
+const placeholder = document.getElementById('placeholder');
+const dropZone = document.getElementById('dropZone');
+
+fileIn.addEventListener('change', e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const url = URL.createObjectURL(f);
+  preview.src = url;
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+});
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.background = 'var(--color-background-tertiary)'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.background = ''; });
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.style.background = '';
+  const f = e.dataTransfer.files[0];
+  if(!f || !f.type.startsWith('image/')) return;
+  const url = URL.createObjectURL(f);
+  preview.src = url;
+  preview.style.display = 'block';
+  placeholder.style.display = 'none';
+});
+
+document.querySelectorAll('.tag').forEach(t => {
+  t.addEventListener('click', () => { t.classList.toggle('active'); upd(); });
+});
+
+function syncColor() {
+  document.getElementById('lightColorText').value = document.getElementById('lightColor').value;
+  upd();
+}
+function syncColorText() {
+  const v = document.getElementById('lightColorText').value;
+  if(/^#[0-9a-fA-F]{6}$/.test(v)) document.getElementById('lightColor').value = v;
+  upd();
+}
+
+function g(id) { return document.getElementById(id); }
+function gv(id) { const el = g(id); return el ? el.value : ''; }
+
+function describeRange(val, low, mid, high) {
+  val = parseInt(val);
+  if(val < 30) return low;
+  if(val < 70) return mid;
+  return high;
+}
+
+function upd() {
+  ['motionSpeed','dof','lightInt','shadowH','grain','sat','cont','colorTemp','sharp','tex','mblur'].forEach(id => {
+    const el = g(id+'V');
+    if(el) el.textContent = gv(id);
+  });
+
+  const subject = gv('subject').trim();
+  const action = gv('action').trim();
+  const env = gv('env').trim();
+  const neg = gv('neg').trim();
+
+  const motionSpeed = parseInt(gv('motionSpeed'));
+  const motionDir = gv('motionDir');
+  const shotType = gv('shotType');
+  const camMove = gv('camMove');
+  const lens = gv('lens');
+  const dof = parseInt(gv('dof'));
+  const lightSrc = gv('lightSrc');
+  const lightDir = gv('lightDir');
+  const lightInt = parseInt(gv('lightInt'));
+  const shadowH = parseInt(gv('shadowH'));
+  const lightColor = gv('lightColorText') || gv('lightColor');
+  const style = gv('style');
+  const grain = parseInt(gv('grain'));
+  const sat = parseInt(gv('sat'));
+  const cont = parseInt(gv('cont'));
+  const colorTemp = parseInt(gv('colorTemp'));
+  const tod = gv('tod');
+  const weather = gv('weather');
+  const sharp = parseInt(gv('sharp'));
+  const tex = parseInt(gv('tex'));
+  const mblur = parseInt(gv('mblur'));
+
+  const moods = [...document.querySelectorAll('#moodTags .tag.active')].map(t=>t.dataset.v);
+  const grades = [...document.querySelectorAll('#gradeTags .tag.active')].map(t=>t.dataset.v);
+
+  let parts = [];
+
+  if(subject) parts.push(`Subject: ${subject}.`);
+  if(action) {
+    let motDesc = '';
+    if(motionSpeed < 30) motDesc = 'very slowly ';
+    else if(motionSpeed > 70) motDesc = 'rapidly ';
+    let dirDesc = motionDir !== 'none' ? `, moving ${motionDir}` : '';
+    parts.push(`Action: ${motDesc}${action}${dirDesc}.`);
+  }
+
+  parts.push(`Shot: ${shotType}, ${lens} lens.`);
+  const dofDesc = describeRange(dof, 'shallow depth of field, subject isolated', 'moderate depth of field', 'deep focus, full scene sharp');
+  parts.push(`Depth of field: ${dofDesc}.`);
+
+  if(camMove !== 'static') parts.push(`Camera: ${camMove}.`);
+
+  const lightIntDesc = describeRange(lightInt, 'dim, low-key lighting', 'moderate lighting', 'high-key, bright lighting');
+  const shadowDesc = describeRange(shadowH, 'soft diffused shadows', 'moderate shadows', 'hard sharp shadows');
+  const colorDesc = lightColor !== '#ffffff' && lightColor !== '#fff5e0' ? `, colored ${lightColor}` : '';
+  parts.push(`Lighting: ${lightSrc}, ${lightDir}, ${lightIntDesc}, ${shadowDesc}${colorDesc}.`);
+
+  if(env) parts.push(`Environment: ${env}, ${tod}, ${weather !== 'clear' ? weather + ' weather' : 'clear weather'}.`);
+  else parts.push(`Time: ${tod}${weather !== 'clear' ? ', '+weather : ''}.`);
+
+  const satDesc = describeRange(sat, 'desaturated, muted tones', 'natural saturation', 'vivid, heavily saturated');
+  const contDesc = describeRange(cont, 'low contrast, flat', 'balanced contrast', 'high contrast, punchy');
+  const tempDesc = describeRange(colorTemp, 'cool blue tones', 'neutral color temperature', 'warm orange tones');
+  parts.push(`Color: ${satDesc}. ${contDesc}. ${tempDesc}.`);
+
+  if(grades.length) parts.push(`Color grade: ${grades.join(', ')}.`);
+
+  parts.push(`Style: ${style}.`);
+  if(grain > 40) parts.push(`Film grain: ${describeRange(grain,'','moderate grain','heavy film grain')}.`);
+  const sharpDesc = describeRange(sharp, 'soft focus, slightly unsharp', 'standard sharpness', 'ultra sharp, hyper-detailed');
+  if(tex > 50) parts.push(`Texture: ${describeRange(tex,'','detailed texture','extreme micro-detail, every surface texture visible')}.`);
+  parts.push(`Sharpness: ${sharpDesc}.`);
+  if(mblur > 20) parts.push(`Motion blur: ${describeRange(mblur,'','subtle motion blur','heavy motion blur on moving elements')}.`);
+
+  if(moods.length) parts.push(`Mood: ${moods.join(', ')}.`);
+
+  if(neg) parts.push(`\nExclude: ${neg}.`);
+
+  g('promptOut').textContent = parts.join(' ');
+}
+
+function copyPrompt() {
+  const text = g('promptOut').textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.querySelector('.copy-btn');
+    btn.textContent = 'Copied';
+    setT
