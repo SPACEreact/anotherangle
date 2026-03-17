@@ -1,7 +1,15 @@
 import { useEditorStore } from '../../stores/useEditorStore';
 
-const TIMES = ['dawn', 'morning', 'noon', 'afternoon', 'golden hour', 'dusk', 'night', 'deep night'];
-const WEATHERS = ['clear', 'overcast', 'fog', 'heavy fog', 'rain', 'storm', 'snow', 'heat haze', 'dust storm'];
+const TIMES = [
+  'dawn', 'sunrise', 'early morning', 'morning', 'noon',
+  'afternoon', 'golden hour', 'sunset', 'blue hour',
+  'dusk', 'twilight', 'night', 'midnight', 'moonlit night',
+];
+const WEATHERS = [
+  'clear', 'partly cloudy', 'overcast', 'misty', 'fog', 'heavy fog',
+  'light rain', 'rain', 'heavy rain', 'storm',
+  'snow', 'blizzard', 'windy', 'heat haze', 'dust storm', 'aurora',
+];
 
 export function EnvironmentSection() {
   const env = useEditorStore((s) => s.env);

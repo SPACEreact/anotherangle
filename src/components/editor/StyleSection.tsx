@@ -1,6 +1,12 @@
 import { useEditorStore } from '../../stores/useEditorStore';
 
-const STYLES = ['photorealistic', 'cinematic film grain', 'analog / 35mm', 'hyperreal', 'painterly', 'graphic novel', 'anime', '3D render', 'claymation', 'watercolor', 'oil painting', 'noir', 'cyberpunk'];
+const STYLES = [
+  'photorealistic', 'cinematic film grain', 'analog / 35mm', 'hyperreal',
+  'painterly', 'graphic novel', 'anime', '3D render', 'claymation',
+  'watercolor', 'oil painting', 'noir', 'cyberpunk',
+  'vintage photograph', 'pastel illustration', 'dark fantasy',
+  'surrealism', 'pixel art', 'ukiyo-e', 'art nouveau', 'vaporwave',
+];
 
 export function StyleSection() {
   const style = useEditorStore((s) => s.style);
