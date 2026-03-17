@@ -327,61 +327,6 @@ function buildLocationTimeDescription(loc: LocationData): string {
 export function buildPrompt(options: PromptBuilderOptions): string {
     const { camera, scene, lighting, composition, location } = options;
 
-    // ── When a reference image is present, build an EDIT/DIRECTIVE prompt ──
-    if (scene.charSheet) {
-        const directives: string[] = [];
-        directives.push("<character_reference_image>");
-        directives.push("Using this reference image as the base");
-
-        // Subject/setting changes
-        if (scene.subject?.trim()) {
-            directives.push(`change the subject to: ${scene.subject.trim()}`);
-        }
-        const locDesc = buildLocationTimeDescription(location);
-        if (locDesc) {
-            directives.push(`move the setting to ${locDesc.replace(/^in /, '')}`);
-        } else if (scene.setting?.trim()) {
-            directives.push(`change the environment to ${scene.setting.trim()}`);
-        }
-
-        // Composition changes
-        const compParts: string[] = [];
-        if (composition.foreground.description?.trim()) {
-            const fogDesc = composition.foreground.fogDensity > 50 ? 'hazy' : composition.foreground.fogDensity > 20 ? 'soft' : 'sharp';
-            compParts.push(`place ${composition.foreground.description.trim()} in a ${fogDesc} foreground`);
-        }
-        if (composition.midground.description?.trim()) {
-            compParts.push(`set ${composition.midground.description.trim()} in the midground`);
-        }
-        if (composition.background.description?.trim()) {
-            const fogDesc = composition.background.fogDensity > 50 ? 'distant atmospheric' : composition.background.fogDensity > 20 ? 'hazy' : 'clear';
-            compParts.push(`place ${composition.background.description.trim()} in a ${fogDesc} background`);
-        }
-        if (composition.depthBlur > 50) compParts.push('apply shallow depth of field');
-        else if (composition.depthBlur > 20) compParts.push('apply moderate depth of field');
-        if (compParts.length) directives.push(`adjust the composition: ${compParts.join(', ')}`);
-
-        // Lighting changes
-        const lightDesc = buildLightingDescription(lighting);
-        if (lightDesc) directives.push(`change the lighting to: ${lightDesc}`);
-
-        // Camera/technical changes
-        const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-        directives.push(`reposition the camera to ${angleDesc}`);
-
-        const lensData = lenses.find(l => l.id === scene.lens);
-        if (lensData) directives.push(`shoot on ${lensData.name} lens`);
-
-        const filmData = filmStocks.find(f => f.id === scene.filmStock);
-        if (filmData) directives.push(`apply ${filmData.prompt}`);
-
-        directives.push(`maintain detailed textures and professional cinematic composition`);
-        directives.push(`--ar ${scene.aspectRatio}`);
-
-        const prompt = directives.join('. ');
-        return applySmartFilter(prompt, location.smartFilterEnabled);
-    }
-
     // ── No reference image: standard 4-layer cinematic generation prompt ──
     const layers: string[] = [];
 
