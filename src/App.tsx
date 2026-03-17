@@ -14,6 +14,7 @@ import { PromptDisplay } from './components/editor/PromptDisplay';
 import { TypographySection } from './components/editor/TypographySection';
 import { CompositionSection } from './components/editor/CompositionSection';
 import { PhysicsSection } from './components/editor/PhysicsSection';
+import { SubtextSection } from './components/editor/SubtextSection';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
       <div className="app-grid">
         {/* LEFT SIDEBAR — All controls */}
         <aside className="sidebar">
+          <SubtextSection />
           <TypographySection />
           <SubjectSection />
           <ActionSection />

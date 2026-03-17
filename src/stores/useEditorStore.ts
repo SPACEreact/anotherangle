@@ -69,6 +69,48 @@ const WEATHER_PROMPTS: Record<string, string> = {
   'windy': 'on a windy day, hair and fabrics blowing, dust and leaves carried in the air, sense of dynamic movement',
 };
 
+// ── CINEMATIC PSYCHOLOGY (DOP SYSTEM) ──
+
+const EMOTION_PROMPTS: Record<string, string> = {
+  'Grief': 'flat diffused light, 85–135mm, static, hold 2 beats too long, room tone amplified',
+  'Melancholy': 'diffused daylight, 50–85mm shallow focus, subtle lateral drift',
+  'Despair': 'low ceiling, underexposed mids, 18mm wide close — barrel distortion, slow push in',
+  'Euphoria': 'open sky dominant, backlight bloom, wider lens slight overexposure, floating camera movement',
+  'Anticipation': 'frame weighted toward empty side, deep focus, directional shadow, slow creep',
+  'Dread': 'negative depth behind subject, hard single source, wide foreground intrusion, static',
+  'Shame': 'partial obstruction, half-face shadow, 85mm close-up, camera lowers subtly',
+  'Pride (Earned)': 'subject stands taller, subtle edge light, 35–50mm neutral, slow push forward',
+  'Arrogance': 'low angle dominance, hard top light, 28mm wide, controlled push',
+  'Jealousy': 'subject foreground, desired object background, split lighting, deep focus both planes, lateral shift',
+  'Nostalgia': 'warm hazy backlight, soft filtration, gentle dolly, slow fades',
+  'Awe': 'subject tiny vs environment, high contrast sunlight, 14mm deep focus, tilt up, slow reveal',
+  'Confusion': 'cluttered frame, mixed color temps, wide with motion blur, uneven handheld',
+  'Relief': 'frame opens, brightness increases, slightly wider lens, exhale push out, cut to stillness',
+  'Betrayal': 'separation shadows, 135mm isolation, slow push on betrayed face',
+  'Determination': 'centered frame, strong 45° key light, locked tripod',
+  'Obsession': 'extreme close-ups, chiaroscuro, foreground object dominates',
+  'Serenity': 'symmetry, even exposure, deep focus, static or slow pan, natural ambience',
+  'Alienation': 'cool tones, 100mm flattening, lateral tracking',
+  'Hope (Active)': 'path or opening ahead, backlight grows, wider deeper focus, forward tracking',
+  'Regret': 'mirror or reflective surface, low key, medium close-up, slow inward drift',
+  'Paranoia': 'background activity sharp, moving shadows, deep focus wide, constant micro-adjustment',
+  'Triumph': 'vertical lift composition, hard backlight flare, slight wide low angle',
+  'Emptiness': 'balanced but lifeless, neutral flat light, static medium shot, no movement',
+};
+
+const PRESSURE_PROMPTS: Record<number, string> = {
+  1: 'Visual Pressure 1: Balanced, natural spatial relationship, zero distortion.',
+  2: 'Visual Pressure 2: Slightly off-center framing, extended takes.',
+  3: 'Visual Pressure 3: Directional light weighting negative space, slow structural push begins.',
+  4: 'Visual Pressure 4: Frame tightens, telephoto compression introduced.',
+  5: 'Visual Pressure 5: Subject separated, shallow DOF, strong key with deep shadows, handheld micro-movements.',
+  6: 'Visual Pressure 6: Established rhythm disrupted, unexpected camera angle.',
+  7: 'Visual Pressure 7: Extreme close-ups, wide lens distortion at close range, foreground intrusion.',
+  8: 'Visual Pressure 8: Time stretches or compresses, absolute subjective detachment.',
+  9: 'Visual Pressure 9: Multiple competing elements, aggressive handheld, severe Dutch angles.',
+  10: 'Visual Pressure 10: Absolute maximum distortion, all grammar intentionally broken, or absolute terrifying stillness after chaos.',
+};
+
 export interface EditorState {
   subject: string;
   action: string;
@@ -96,6 +138,13 @@ export interface EditorState {
   sharp: number;
   tex: number;
   mblur: number;
+
+  // Cinematic Psychology
+  coreEmotion: string;
+  pressureLevel: number;
+  anchorObject: string;
+  anchorPurpose: string;
+  antiCliche: boolean;
 
   // Typography
   textNode: string;
@@ -141,6 +190,12 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   action: '',
   motionSpeed: 40,
   motionDir: 'none',
+
+  coreEmotion: 'None',
+  pressureLevel: 1,
+  anchorObject: '',
+  anchorPurpose: 'unspecified',
+  antiCliche: false,
 
   shotType: 'medium shot',
   camMove: 'static',
@@ -222,6 +277,24 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   buildPrompt: () => {
     const s = get();
     const parts: string[] = [];
+
+    // ── CINEMATIC PSYCHOLOGY & THEME ──
+    if (s.coreEmotion !== 'None' && EMOTION_PROMPTS[s.coreEmotion]) {
+      let psych = `CINEMATIC PSYCHOLOGY: Driven by ${s.coreEmotion.toUpperCase()}. Visual grammar applied: ${EMOTION_PROMPTS[s.coreEmotion]}.`;
+      if (s.antiCliche) {
+        psych += ' ANTI-CLICHÉ MODE ACTIVE: Subvert expected visual tropes for this emotion (e.g., bright indifference applied to dark themes).';
+      }
+      parts.push(psych);
+    }
+
+    if (s.pressureLevel > 1) {
+      parts.push(PRESSURE_PROMPTS[s.pressureLevel] || '');
+    }
+
+    // ── NAREATIVE ANCHOR ("Every Object is Evidence") ──
+    if (s.anchorObject.trim() && s.anchorPurpose !== 'unspecified') {
+      parts.push(`NARRATIVE ANCHOR: Include the specific object "${s.anchorObject.trim()}" in the frame to serve as ${s.anchorPurpose}. Nothing is decorative; this object is evidence of the subtext.`);
+    }
 
     // ── SUBJECT ──
     if (s.subject.trim()) {
