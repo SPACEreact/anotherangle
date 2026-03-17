@@ -145,6 +145,7 @@ export interface EditorState {
   anchorObject: string;
   anchorPurpose: string;
   antiCliche: boolean;
+  intelligentHierarchy: boolean;
 
   // Typography
   textNode: string;
@@ -196,6 +197,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   anchorObject: '',
   anchorPurpose: 'unspecified',
   antiCliche: false,
+  intelligentHierarchy: true,
 
   shotType: 'medium shot',
   camMove: 'static',
@@ -279,16 +281,39 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     const parts: string[] = [];
 
     // ── CINEMATIC PSYCHOLOGY & THEME ──
-    if (s.coreEmotion !== 'None' && EMOTION_PROMPTS[s.coreEmotion]) {
-      let psych = `CINEMATIC PSYCHOLOGY: Driven by ${s.coreEmotion.toUpperCase()}. Visual grammar applied: ${EMOTION_PROMPTS[s.coreEmotion]}.`;
+    if (s.intelligentHierarchy && s.coreEmotion !== 'None' && EMOTION_PROMPTS[s.coreEmotion]) {
+      // Organic Integration: The emotion drives the physical description smoothly.
+      let intro = `A cinematic shot driven by a core feeling of ${s.coreEmotion.toLowerCase()}`;
       if (s.antiCliche) {
-        psych += ' ANTI-CLICHÉ MODE ACTIVE: Subvert expected visual tropes for this emotion (e.g., bright indifference applied to dark themes).';
+         intro += `, subverting typical visual expectations for this mood`;
       }
-      parts.push(psych);
-    }
+      parts.push(`${intro}. Visually, the scene is defined by ${EMOTION_PROMPTS[s.coreEmotion]}`);
 
-    if (s.pressureLevel > 1) {
-      parts.push(PRESSURE_PROMPTS[s.pressureLevel] || '');
+      // We derive organic pressure descriptions instead of saying "Visual Pressure X"
+      // If Dread/Despair/Paranoia -> high pressure. Melancholy -> low pressure.
+      const highPressureEmotions = ['Dread', 'Despair', 'Paranoia', 'Confusion', 'Obsession', 'Betrayal'];
+      const lowPressureEmotions = ['Serenity', 'Relief', 'Melancholy', 'Nostalgia', 'Emptiness'];
+      
+      if (highPressureEmotions.includes(s.coreEmotion)) {
+         parts.push('The visual pressure is immense, featuring extreme spatial compression, high-contrast shifts, and intentional framing distortion to physically manifest the internal tension');
+      } else if (lowPressureEmotions.includes(s.coreEmotion)) {
+         parts.push('The visual pressure is completely relaxed, allowing the frame to breathe with balanced spatial relationships and minimal lens distortion');
+      } else {
+         parts.push('The framing maintains a moderate visual pressure, balancing character focus against the environmental weight');
+      }
+    } else {
+      // Fallback to literal manual tags if hierarchy is disabled
+      if (s.coreEmotion !== 'None' && EMOTION_PROMPTS[s.coreEmotion]) {
+        let psych = `CINEMATIC PSYCHOLOGY: Driven by ${s.coreEmotion.toUpperCase()}. Visual grammar applied: ${EMOTION_PROMPTS[s.coreEmotion]}.`;
+        if (s.antiCliche) {
+          psych += ' ANTI-CLICHÉ MODE ACTIVE: Subvert expected visual tropes for this emotion (e.g., bright indifference applied to dark themes).';
+        }
+        parts.push(psych);
+      }
+
+      if (s.pressureLevel > 1) {
+        parts.push(PRESSURE_PROMPTS[s.pressureLevel] || '');
+      }
     }
 
     // ── NAREATIVE ANCHOR ("Every Object is Evidence") ──

@@ -22,6 +22,7 @@ export function SubtextSection() {
   const anchorObject = useEditorStore((s) => s.anchorObject);
   const anchorPurpose = useEditorStore((s) => s.anchorPurpose);
   const antiCliche = useEditorStore((s) => s.antiCliche);
+  const intelligentHierarchy = useEditorStore((s) => s.intelligentHierarchy);
   const set = useEditorStore((s) => s.set);
 
   return (
@@ -29,9 +30,26 @@ export function SubtextSection() {
       <div className="section-title" style={{ color: 'var(--color-accent)' }}>
         Step 1: Subtext & Psychology
       </div>
-      <p style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginBottom: 12 }}>
+      <p style={{ fontSize: '10px', color: 'var(--color-text-tertiary)', marginBottom: 16 }}>
         "Every Object is Evidence." Define the underlying tension before rendering the scene.
       </p>
+
+      <div className="control-row" style={{ marginBottom: 16 }}>
+        <label style={{ display: 'flex', alignItems: 'flex-start', gap: 8, cursor: 'pointer', width: '100%' }}>
+          <input
+            type="checkbox"
+            checked={intelligentHierarchy}
+            onChange={(e) => set({ intelligentHierarchy: e.target.checked })}
+            style={{ marginTop: 2 }}
+          />
+          <span style={{ fontSize: '0.85rem', color: 'var(--color-text-primary)' }}>
+            <strong>Intelligent Hierarchy</strong>
+            <div style={{ fontSize: '0.75rem', color: 'var(--color-text-tertiary)', marginTop: 2 }}>
+              Auto-generate organic camera/lighting prompts based on the Emotion.
+            </div>
+          </span>
+        </label>
+      </div>
 
       <div className="control-row">
         <label>Core Emotion</label>
@@ -40,18 +58,20 @@ export function SubtextSection() {
         </select>
       </div>
 
-      <div className="control-row">
-        <label>Visual Pressure</label>
-        <input 
-          type="range" 
-          min={1} 
-          max={10} 
-          step={1}
-          value={pressureLevel} 
-          onChange={(e) => set({ pressureLevel: +e.target.value })} 
-        />
-        <span className="val text-amber-500">{pressureLevel}/10</span>
-      </div>
+      {!intelligentHierarchy && (
+        <div className="control-row">
+          <label>Visual Pressure</label>
+          <input 
+            type="range" 
+            min={1} 
+            max={10} 
+            step={1}
+            value={pressureLevel} 
+            onChange={(e) => set({ pressureLevel: +e.target.value })} 
+          />
+          <span className="val text-amber-500">{pressureLevel}/10</span>
+        </div>
+      )}
 
       <div className="control-row" style={{ marginTop: 12 }}>
         <label>Anchor Object</label>
