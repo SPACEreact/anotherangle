@@ -9,7 +9,6 @@ export interface CameraAngles {
 export interface SceneSettings {
     subject: string;
     setting: string;
-    charSheet: string | null;
     lens: string;
     aspectRatio: string;
     lighting: string;
@@ -53,7 +52,7 @@ export interface UIState {
 }
 
 export interface PromptSegment {
-    type: 'reference' | 'subject' | 'camera' | 'setting' | 'lighting' | 'quality' | 'parameters';
+    type: 'subject' | 'composition' | 'location' | 'camera' | 'lighting' | 'quality' | 'parameters';
     content: string;
 }
 
