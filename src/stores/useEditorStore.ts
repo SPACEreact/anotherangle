@@ -173,6 +173,10 @@ export interface EditorState {
   // Image upload
   referenceImages: string[];
   isAnalyzing: boolean;
+
+  // AI Prompt
+  aiPrompt: string;
+  isGeneratingPrompt: boolean;
   
   set: (partial: Partial<EditorState>) => void;
   toggleMood: (mood: string) => void;
@@ -248,30 +252,46 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   referenceImages: [],
   isAnalyzing: false,
 
-  set: (partial) => set(partial),
+  aiPrompt: '',
+  isGeneratingPrompt: false,
+
+  set: (partial) => {
+    // If the update explicitly includes AI prompt fields, don't overwrite them
+    if ('aiPrompt' in partial || 'isGeneratingPrompt' in partial) {
+      set(partial);
+    } else {
+      // General form fields changed -> invalidate the current AI prompt
+      set({ ...partial, aiPrompt: '' });
+    }
+  },
   toggleMood: (mood) =>
     set((s) => ({
+      aiPrompt: '',
       moods: s.moods.includes(mood) ? s.moods.filter((m) => m !== mood) : [...s.moods, mood],
     })),
   toggleGrade: (grade) =>
     set((s) => ({
+      aiPrompt: '',
       grades: s.grades.includes(grade) ? s.grades.filter((g) => g !== grade) : [...s.grades, grade],
     })),
   toggleOptics: (effect) =>
     set((s) => ({
+      aiPrompt: '',
       opticsEffects: s.opticsEffects.includes(effect) ? s.opticsEffects.filter((e) => e !== effect) : [...s.opticsEffects, effect],
     })),
   togglePhysics: (effect) =>
     set((s) => ({
+      aiPrompt: '',
       materialPhysics: s.materialPhysics.includes(effect) ? s.materialPhysics.filter((e) => e !== effect) : [...s.materialPhysics, effect],
     })),
   addReferenceImage: (url) => 
     set((s) => {
-      if (s.referenceImages.length >= 14) return s; // NB2 supports up to 14
-      return { referenceImages: [...s.referenceImages, url] }
+      if (s.referenceImages.length >= 14) return s; 
+      return { referenceImages: [...s.referenceImages, url], aiPrompt: '' }
     }),
   removeReferenceImage: (index) =>
     set((s) => ({
+      aiPrompt: '',
       referenceImages: s.referenceImages.filter((_, i) => i !== index)
     })),
   setIsAnalyzing: (v) => set({ isAnalyzing: v }),
