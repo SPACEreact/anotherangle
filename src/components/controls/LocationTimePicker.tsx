@@ -117,8 +117,8 @@ function SimpleMap() {
 
 export function LocationTimePicker() {
     const {
-        mode, coordinates, earthLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled,
-        setMode, setEarthLocation, setCustomLocation, setCosmicLocation, setEra, setYear, setTimeOfDay, setWeather, setSeason, setSmartFilterEnabled, setCoordinates
+        mode, coordinates, earthLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled, universePoint, cameraVantage, cosmicEpochYear,
+        setMode, setEarthLocation, setCustomLocation, setCosmicLocation, setEra, setYear, setTimeOfDay, setWeather, setSeason, setSmartFilterEnabled, setCoordinates, setUniversePoint, setCameraVantage, setCosmicEpochYear
     } = useLocationStore();
 
     const [showAllCosmic, setShowAllCosmic] = useState(false);
@@ -287,6 +287,61 @@ export function LocationTimePicker() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+            </Card>
+
+
+
+            <Card>
+                <CardHeader icon={<Globe size={14} className="text-fuchsia-400" />}>
+                    <span className="text-fuchsia-400">Observable Universe Controls</span>
+                </CardHeader>
+
+                <div className="space-y-2">
+                    <div>
+                        <label htmlFor="universe-point" className="text-[10px] uppercase opacity-60 block mb-1">
+                            Universe point
+                        </label>
+                        <input
+                            id="universe-point"
+                            type="text"
+                            value={universePoint}
+                            onChange={(e) => setUniversePoint(e.target.value)}
+                            placeholder="e.g., edge of Orion Spur, facing galactic core"
+                            className="w-full bg-zinc-900/50 border border-zinc-700 rounded p-2 text-xs focus:border-fuchsia-400 focus:outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <label htmlFor="camera-vantage" className="text-[10px] uppercase opacity-60 block mb-1">
+                            Camera vantage
+                        </label>
+                        <input
+                            id="camera-vantage"
+                            type="text"
+                            value={cameraVantage}
+                            onChange={(e) => setCameraVantage(e.target.value)}
+                            placeholder="e.g., orbital drone, 300m altitude, 45° tilt"
+                            className="w-full bg-zinc-900/50 border border-zinc-700 rounded p-2 text-xs focus:border-fuchsia-400 focus:outline-none"
+                        />
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label htmlFor="cosmic-epoch" className="text-[10px] uppercase opacity-60">Cosmic epoch</label>
+                            <span className="text-xs font-mono font-bold">
+                                {cosmicEpochYear < 0 ? `${Math.abs(cosmicEpochYear)} BCE` : `${cosmicEpochYear} CE`}
+                            </span>
+                        </div>
+                        <Slider
+                            value={cosmicEpochYear}
+                            onChange={setCosmicEpochYear}
+                            min={-50000}
+                            max={50000}
+                            showValue={false}
+                            color="cyan"
+                        />
+                    </div>
+                </div>
             </Card>
 
             {/* Time Card */}
