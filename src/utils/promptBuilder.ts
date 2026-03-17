@@ -54,6 +54,9 @@ interface LocationData {
     weather: string;
     season: string;
     smartFilterEnabled: boolean;
+    universePoint: string;
+    cameraVantage: string;
+    cosmicEpochYear: number;
 }
 
 export interface PromptBuilderOptions {
@@ -279,6 +282,20 @@ function buildLocationTimeDescription(loc: LocationData): string {
         if (found) parts.push(found.prompt);
     }
 
+    if (loc.universePoint?.trim()) {
+        parts.push(`observation point: ${loc.universePoint.trim()}`);
+    }
+
+    if (loc.cameraVantage?.trim()) {
+        parts.push(`camera vantage: ${loc.cameraVantage.trim()}`);
+    }
+
+    if (loc.mode === 'cosmic' && Number.isFinite(loc.cosmicEpochYear)) {
+        const epoch = Math.round(loc.cosmicEpochYear);
+        const epochLabel = epoch < 0 ? `${Math.abs(epoch)} BCE` : `${epoch} CE`;
+        parts.push(`cosmic epoch ${epochLabel}`);
+    }
+
     // Era
     const era = eras.find(e => e.id === loc.era);
     if (era && loc.era !== 'modern') {
@@ -361,7 +378,7 @@ export function buildPrompt(options: PromptBuilderOptions): string {
         directives.push(`maintain detailed textures and professional cinematic composition`);
         directives.push(`--ar ${scene.aspectRatio}`);
 
-        let prompt = directives.join('. ');
+        const prompt = directives.join('. ');
         return applySmartFilter(prompt, location.smartFilterEnabled);
     }
 
@@ -403,7 +420,7 @@ export function buildPrompt(options: PromptBuilderOptions): string {
     layer4Parts.push(`--ar ${scene.aspectRatio}`);
     layers.push(layer4Parts.join(', '));
 
-    let prompt = layers.join('. ');
+    const prompt = layers.join('. ');
     return applySmartFilter(prompt, location.smartFilterEnabled);
 }
 
