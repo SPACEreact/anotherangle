@@ -34,6 +34,11 @@ export interface LocationState {
     // Smart Filter
     smartFilterEnabled: boolean;
 
+    // Observable universe controls
+    universePoint: string;
+    cameraVantage: string;
+    cosmicEpochYear: number;
+
     // Actions
     setMode: (mode: LocationMode) => void;
     setCoordinates: (coords: MapCoordinates | null) => void;
@@ -46,6 +51,9 @@ export interface LocationState {
     setWeather: (weather: string) => void;
     setSeason: (season: string) => void;
     setSmartFilterEnabled: (enabled: boolean) => void;
+    setUniversePoint: (point: string) => void;
+    setCameraVantage: (vantage: string) => void;
+    setCosmicEpochYear: (year: number) => void;
     reset: () => void;
 }
 
@@ -61,6 +69,9 @@ const DEFAULT_STATE = {
     weather: 'clear',
     season: 'summer',
     smartFilterEnabled: true,
+    universePoint: 'Solar System, 8 kpc from the Milky Way center',
+    cameraVantage: 'human-eye level observer platform',
+    cosmicEpochYear: 2024,
 };
 
 export const useLocationStore = create<LocationState>((set) => ({
@@ -77,6 +88,9 @@ export const useLocationStore = create<LocationState>((set) => ({
     setWeather: (weather) => set({ weather }),
     setSeason: (season) => set({ season }),
     setSmartFilterEnabled: (smartFilterEnabled) => set({ smartFilterEnabled }),
+    setUniversePoint: (universePoint) => set({ universePoint }),
+    setCameraVantage: (cameraVantage) => set({ cameraVantage }),
+    setCosmicEpochYear: (cosmicEpochYear) => set({ cosmicEpochYear }),
 
     reset: () => set(DEFAULT_STATE),
 }));

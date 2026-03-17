@@ -18,7 +18,6 @@ export function usePromptGenerator() {
 
     const subject = useSceneStore(s => s.subject);
     const setting = useSceneStore(s => s.setting);
-    const charSheet = useSceneStore(s => s.charSheet);
     const lens = useSceneStore(s => s.lens);
     const aspectRatio = useSceneStore(s => s.aspectRatio);
     const lightingPreset = useSceneStore(s => s.lighting);
@@ -53,20 +52,23 @@ export function usePromptGenerator() {
     const weather = useLocationStore(s => s.weather);
     const season = useLocationStore(s => s.season);
     const smartFilterEnabled = useLocationStore(s => s.smartFilterEnabled);
+    const universePoint = useLocationStore(s => s.universePoint);
+    const cameraVantage = useLocationStore(s => s.cameraVantage);
+    const cosmicEpochYear = useLocationStore(s => s.cosmicEpochYear);
 
     // Build options object with all values
     const options = useMemo(() => ({
         camera: { azimuth, elevation, roll },
-        scene: { subject, setting, charSheet, lens, aspectRatio, lighting: lightingPreset, filmStock },
+        scene: { subject, setting, lens, aspectRatio, lighting: lightingPreset, filmStock },
         lighting: { keyLight, fillLight, backLight, practicalLight, practicalType, volumetric, fogDensity, fogColor },
         composition: { foreground, midground, background, depthBlur, focusLayer },
-        location: { mode, coordinates, earthLocation, customLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled },
+        location: { mode, coordinates, earthLocation, customLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled, universePoint, cameraVantage, cosmicEpochYear },
     }), [
         azimuth, elevation, roll,
-        subject, setting, charSheet, lens, aspectRatio, lightingPreset, filmStock,
+        subject, setting, lens, aspectRatio, lightingPreset, filmStock,
         keyLight, fillLight, backLight, practicalLight, practicalType, volumetric, fogDensity, fogColor,
         foreground, midground, background, depthBlur, focusLayer,
-        mode, coordinates, earthLocation, customLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled,
+        mode, coordinates, earthLocation, customLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled, universePoint, cameraVantage, cosmicEpochYear,
     ]);
 
     const prompt = useMemo(() => buildPrompt(options), [options]);

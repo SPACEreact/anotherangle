@@ -2,8 +2,13 @@ name: Deploy to GitHub Pages
 
 on:
   push:
-    branches: [main]
+    branches: [main, work]
   workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref (branch/tag/SHA) to deploy'
+        required: false
+        default: ''
 
 permissions:
   contents: read
@@ -19,10 +24,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.inputs.ref || github.ref }}
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+      - uses: actions/configure-pages@v5
       - run: npm ci
       - run: npm run build
         env:

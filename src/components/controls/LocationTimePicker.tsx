@@ -29,6 +29,27 @@ interface GeocodeResponse {
     results?: GeocodeResult[];
 }
 
+
+const UNIVERSE_POINT_PRESETS = [
+    'Solar System, Orion Arm, facing Milky Way core',
+    'Intergalactic void between the Milky Way and Andromeda',
+    'Near the Pillars of Creation in Eagle Nebula',
+    'Close orbit around a neutron star in Cygnus X-1',
+];
+
+const CAMERA_VANTAGE_PRESETS = [
+    'human eye-level observer platform',
+    'orbital drone, 300m altitude, 45° downward tilt',
+    'ultra-wide IMAX camera on stabilized probe',
+    'telephoto deep-space observatory framing distant galaxies',
+];
+
+const COSMIC_EPOCH_PRESETS = [
+    { label: 'Early Civilization', year: -3000 },
+    { label: 'Present', year: 2024 },
+    { label: 'Near Future', year: 2500 },
+    { label: 'Deep Future', year: 12000 },
+];
 // Simple Map Component using an iframe
 function SimpleMap() {
     const { coordinates, setCoordinates } = useLocationStore();
@@ -117,8 +138,8 @@ function SimpleMap() {
 
 export function LocationTimePicker() {
     const {
-        mode, coordinates, earthLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled,
-        setMode, setEarthLocation, setCustomLocation, setCosmicLocation, setEra, setYear, setTimeOfDay, setWeather, setSeason, setSmartFilterEnabled, setCoordinates
+        mode, coordinates, earthLocation, cosmicLocation, era, year, timeOfDay, weather, season, smartFilterEnabled, universePoint, cameraVantage, cosmicEpochYear,
+        setMode, setEarthLocation, setCustomLocation, setCosmicLocation, setEra, setYear, setTimeOfDay, setWeather, setSeason, setSmartFilterEnabled, setCoordinates, setUniversePoint, setCameraVantage, setCosmicEpochYear
     } = useLocationStore();
 
     const [showAllCosmic, setShowAllCosmic] = useState(false);
@@ -132,6 +153,23 @@ export function LocationTimePicker() {
         const suggestions = await getSceneSuggestions(coordinates.placeName);
         setAiSuggestions(suggestions);
         setLoadingSuggestions(false);
+    };
+
+    const randomizeUniverseSettings = () => {
+        const randomPoint = UNIVERSE_POINT_PRESETS[Math.floor(Math.random() * UNIVERSE_POINT_PRESETS.length)];
+        const randomVantage = CAMERA_VANTAGE_PRESETS[Math.floor(Math.random() * CAMERA_VANTAGE_PRESETS.length)];
+        const randomEpoch = COSMIC_EPOCH_PRESETS[Math.floor(Math.random() * COSMIC_EPOCH_PRESETS.length)].year;
+        setUniversePoint(randomPoint);
+        setCameraVantage(randomVantage);
+        setCosmicEpochYear(randomEpoch);
+    };
+
+    const syncFromSelectedCosmicLocation = () => {
+        const currentCosmic = cosmicLocations.find((loc) => loc.id === cosmicLocation);
+        if (!currentCosmic) return;
+        setMode('cosmic');
+        setUniversePoint(currentCosmic.prompt);
+        setCameraVantage(`cinematic explorer camera near ${currentCosmic.name}`);
     };
 
     return (
@@ -287,6 +325,109 @@ export function LocationTimePicker() {
                         </motion.div>
                     )}
                 </AnimatePresence>
+            </Card>
+
+
+
+            <Card>
+                <CardHeader icon={<Globe size={14} className="text-fuchsia-400" />}>
+                    <span className="text-fuchsia-400">Observable Universe Controls</span>
+                </CardHeader>
+
+                <div className="space-y-2">
+                    <div className="flex gap-1">
+                        <button
+                            onClick={randomizeUniverseSettings}
+                            className="flex-1 py-1.5 rounded text-[10px] font-bold bg-fuchsia-500/20 border border-fuchsia-500/40 text-fuchsia-200 hover:bg-fuchsia-500/30"
+                        >
+                            🎲 Randomize View
+                        </button>
+                        <button
+                            onClick={syncFromSelectedCosmicLocation}
+                            className="flex-1 py-1.5 rounded text-[10px] font-bold bg-indigo-500/20 border border-indigo-500/40 text-indigo-200 hover:bg-indigo-500/30"
+                        >
+                            🛰️ Use Cosmic Location
+                        </button>
+                    </div>
+
+                    <div>
+                        <label htmlFor="universe-point" className="text-[10px] uppercase opacity-60 block mb-1">
+                            Universe point
+                        </label>
+                        <input
+                            id="universe-point"
+                            type="text"
+                            value={universePoint}
+                            onChange={(e) => setUniversePoint(e.target.value)}
+                            placeholder="e.g., edge of Orion Spur, facing galactic core"
+                            className="w-full bg-zinc-900/50 border border-zinc-700 rounded p-2 text-xs focus:border-fuchsia-400 focus:outline-none"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            {UNIVERSE_POINT_PRESETS.map((preset) => (
+                                <button
+                                    key={preset}
+                                    onClick={() => setUniversePoint(preset)}
+                                    className="px-2 py-1 rounded text-[10px] bg-zinc-800 border border-zinc-700 hover:border-fuchsia-400/60"
+                                >
+                                    {preset.length > 26 ? `${preset.slice(0, 26)}…` : preset}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <label htmlFor="camera-vantage" className="text-[10px] uppercase opacity-60 block mb-1">
+                            Camera vantage
+                        </label>
+                        <input
+                            id="camera-vantage"
+                            type="text"
+                            value={cameraVantage}
+                            onChange={(e) => setCameraVantage(e.target.value)}
+                            placeholder="e.g., orbital drone, 300m altitude, 45° tilt"
+                            className="w-full bg-zinc-900/50 border border-zinc-700 rounded p-2 text-xs focus:border-fuchsia-400 focus:outline-none"
+                        />
+                        <div className="flex flex-wrap gap-1 mt-1">
+                            {CAMERA_VANTAGE_PRESETS.map((preset) => (
+                                <button
+                                    key={preset}
+                                    onClick={() => setCameraVantage(preset)}
+                                    className="px-2 py-1 rounded text-[10px] bg-zinc-800 border border-zinc-700 hover:border-fuchsia-400/60"
+                                >
+                                    {preset.length > 30 ? `${preset.slice(0, 30)}…` : preset}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    <div>
+                        <div className="flex items-center justify-between mb-1">
+                            <label htmlFor="cosmic-epoch" className="text-[10px] uppercase opacity-60">Cosmic epoch</label>
+                            <span className="text-xs font-mono font-bold">
+                                {cosmicEpochYear < 0 ? `${Math.abs(cosmicEpochYear)} BCE` : `${cosmicEpochYear} CE`}
+                            </span>
+                        </div>
+                        <Slider
+                            value={cosmicEpochYear}
+                            onChange={setCosmicEpochYear}
+                            min={-50000}
+                            max={50000}
+                            showValue={false}
+                            color="cyan"
+                        />
+                        <div className="grid grid-cols-2 gap-1 mt-1">
+                            {COSMIC_EPOCH_PRESETS.map((preset) => (
+                                <button
+                                    key={preset.label}
+                                    onClick={() => setCosmicEpochYear(preset.year)}
+                                    className="px-2 py-1 rounded text-[10px] bg-zinc-800 border border-zinc-700 hover:border-cyan-400/60 text-left"
+                                >
+                                    {preset.label}: {preset.year < 0 ? `${Math.abs(preset.year)} BCE` : `${preset.year} CE`}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                </div>
             </Card>
 
             {/* Time Card */}
