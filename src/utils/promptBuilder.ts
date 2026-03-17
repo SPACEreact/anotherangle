@@ -427,55 +427,48 @@ export function buildPrompt(options: PromptBuilderOptions): string {
 export function buildPromptSegments(options: PromptBuilderOptions) {
     const { camera, scene, lighting, composition, location } = options;
     const segments: { type: string; content: string }[] = [];
-    const isEdit = !!scene.charSheet;
-
-    if (isEdit) {
-        segments.push({ type: 'reference', content: '<character_reference_image>' });
-        segments.push({ type: 'reference', content: 'Using this reference image as the base' });
-    }
-
     // Subject
     if (scene.subject?.trim()) {
-        segments.push({ type: 'subject', content: isEdit ? `change the subject to: ${scene.subject.trim()}` : scene.subject.trim() });
+        segments.push({ type: 'subject', content: scene.subject.trim() });
     }
 
     // Setting/Location
     const locDesc = buildLocationTimeDescription(location);
     if (locDesc) {
-        segments.push({ type: 'location', content: isEdit ? `move the setting to ${locDesc.replace(/^in /, '')}` : locDesc });
+        segments.push({ type: 'location', content: locDesc });
     } else if (scene.setting?.trim()) {
-        segments.push({ type: 'location', content: isEdit ? `change the environment to ${scene.setting.trim()}` : `set in ${scene.setting.trim()}` });
+        segments.push({ type: 'location', content: `set in ${scene.setting.trim()}` });
     }
 
     // Composition
     const compDesc = buildCompositionDescription(composition);
     if (compDesc) {
-        segments.push({ type: 'composition', content: isEdit ? `adjust the composition: ${compDesc}` : compDesc });
+        segments.push({ type: 'composition', content: compDesc });
     }
 
     // Lighting
     const lightDesc = buildLightingDescription(lighting);
     if (lightDesc) {
-        segments.push({ type: 'lighting', content: isEdit ? `change the lighting to: ${lightDesc}` : lightDesc });
+        segments.push({ type: 'lighting', content: lightDesc });
     }
 
     // Camera angle
     const angleDesc = getCameraAngleDescription(camera.azimuth, camera.elevation, camera.roll);
-    segments.push({ type: 'camera', content: isEdit ? `reposition the camera to ${angleDesc}` : `camera positioned at ${angleDesc}` });
+    segments.push({ type: 'camera', content: `camera positioned at ${angleDesc}` });
 
     // Lens
     const lensData = lenses.find(l => l.id === scene.lens);
     if (lensData) {
-        segments.push({ type: 'camera', content: isEdit ? `shoot on ${lensData.name} lens` : `shot on ${lensData.name} lens` });
+        segments.push({ type: 'camera', content: `shot on ${lensData.name} lens` });
     }
 
     // Film stock
     const filmData = filmStocks.find(f => f.id === scene.filmStock);
     if (filmData) {
-        segments.push({ type: 'quality', content: isEdit ? `apply ${filmData.prompt}` : filmData.prompt });
+        segments.push({ type: 'quality', content: filmData.prompt });
     }
 
-    segments.push({ type: 'quality', content: isEdit ? 'maintain detailed textures and professional cinematic composition' : 'detailed textures, professional cinematic composition' });
+    segments.push({ type: 'quality', content: 'detailed textures, professional cinematic composition' });
     segments.push({ type: 'parameters', content: `--ar ${scene.aspectRatio}` });
 
     return segments;

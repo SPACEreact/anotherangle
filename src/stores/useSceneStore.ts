@@ -4,7 +4,6 @@ import type { SceneSettings } from '../types';
 interface SceneStore extends SceneSettings {
     setSubject: (value: string) => void;
     setSetting: (value: string) => void;
-    setCharSheet: (value: string | null) => void;
     setLens: (value: string) => void;
     setAspectRatio: (value: string) => void;
     setLighting: (value: string) => void;
@@ -16,7 +15,6 @@ interface SceneStore extends SceneSettings {
 const DEFAULT_SCENE: SceneSettings = {
     subject: "A cyberpunk samurai warrior",
     setting: "neon-lit rain slicked streets",
-    charSheet: null,
     lens: "50mm",
     aspectRatio: "16:9",
     lighting: "natural",
@@ -28,7 +26,6 @@ export const useSceneStore = create<SceneStore>((set) => ({
 
     setSubject: (value: string) => set({ subject: value }),
     setSetting: (value: string) => set({ setting: value }),
-    setCharSheet: (value: string | null) => set({ charSheet: value }),
     setLens: (value: string) => set({ lens: value }),
     setAspectRatio: (value: string) => set({ aspectRatio: value }),
     setLighting: (value: string) => set({ lighting: value }),
